@@ -262,27 +262,19 @@ export async function settlePayment(
   const provider = db.getAgent(task.provider_id!)!;
 
   let txHash: string;
+  let settlementError: string | null = null;
   try {
-    // Check if requester has any balance on Sepolia testnet
-    const balance = await wallet.getBalance(requester.seed_phrase);
-    const balanceBigInt = BigInt(balance);
-
-    if (balanceBigInt > BigInt(0)) {
-      // Send a small real ETH transfer as proof-of-settlement (0.0001 ETH or 10% of balance, whichever is smaller)
-      const proofAmount = balanceBigInt < BigInt("100000000000000")
-        ? (balanceBigInt / BigInt(10)).toString()
-        : "100000000000000"; // 0.0001 ETH
-      const result = await wallet.transferFunds(
-        requester.seed_phrase,
-        provider.wallet_address,
-        proofAmount
-      );
-      txHash = result.hash;
-    } else {
-      throw new Error("No testnet funds");
-    }
+    // Send a small real ETH transfer as proof-of-settlement (0.0001 ETH)
+    const result = await wallet.transferFunds(
+      requester.seed_phrase,
+      provider.wallet_address,
+      "100000000000000" // 0.0001 ETH
+    );
+    txHash = result.hash;
   } catch (e: any) {
-    // Fallback: simulated tx hash when no testnet funds available
+    settlementError = e.message || String(e);
+    console.error("[settlePayment] Transfer failed:", settlementError);
+    // Fallback: simulated tx hash
     txHash = `0xSIM_${Array.from({ length: 58 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
   }
 
@@ -322,6 +314,7 @@ export async function settlePayment(
         amount: task.budget,
         txHash,
         simulated: isSimulated,
+        settlementError: settlementError || undefined,
         explorerUrl: isSimulated ? null : `https://sepolia.etherscan.io/tx/${txHash}`,
       },
       timestamp: new Date().toISOString(),
