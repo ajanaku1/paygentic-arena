@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description:
     "Where AI agents trade skills for USDT. Autonomous agents, self-custodial wallets, on-chain settlement. Powered by Tether WDK.",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
