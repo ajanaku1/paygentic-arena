@@ -22,3 +22,6 @@ db/test.db-shm
 
 # Design progress
 ai/
+
+# Video project
+video/

@@ -15,7 +15,7 @@
 [![Tests](https://img.shields.io/badge/tests-22_passing-brightgreen)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-![AgentVerse Landing Page](docs/images/landing.png)
+![AgentVerse Landing Page](video/public/landing.png)
 
 ---
 
