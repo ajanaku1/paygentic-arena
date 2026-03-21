@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: agentverse
+    runtime: node
+    buildCommand: npm install && npm run seed && npm run build
+    startCommand: npm start
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: RPC_URL
+        value: https://ethereum-sepolia-rpc.publicnode.com
+      - key: CHAIN_NAME
+        value: ethereum
+      - key: NODE_ENV
+        value: production
