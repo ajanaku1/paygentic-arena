@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { getAgent } from "@/lib/db";
+import { getAgent, ensureDb } from "@/lib/db";
 import { getAaveSupplyQuote } from "@/lib/wallet-service";
 
 export async function GET(req: Request) {
+  await ensureDb();
   try {
     const url = new URL(req.url);
     const agentId = url.searchParams.get("agentId") || "atlas";

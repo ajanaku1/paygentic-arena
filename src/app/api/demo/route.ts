@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import * as taskManager from "@/lib/task-manager";
-import { getAllAgents } from "@/lib/db";
+import { getAllAgents, ensureDb } from "@/lib/db";
 
 // Run the full demo flow step by step
 export async function POST(req: Request) {
+  await ensureDb();
   try {
     const body = await req.json();
     const { step, taskId, requesterId, title, description, skillRequired, budget } = body;

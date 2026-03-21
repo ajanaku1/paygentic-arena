@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAgent } from "@/lib/db";
+import { getAgent, ensureDb } from "@/lib/db";
 import {
   getWalletAddress,
   getBalance,
@@ -7,6 +7,7 @@ import {
 } from "@/lib/wallet-service";
 
 export async function GET(req: Request) {
+  await ensureDb();
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get("agentId");
 

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getTask } from "@/lib/db";
+import { getTask, ensureDb } from "@/lib/db";
 import * as taskManager from "@/lib/task-manager";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDb();
   const { id } = await params;
   const task = getTask(id);
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -16,6 +17,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDb();
   try {
     const { id } = await params;
     const body = await req.json();

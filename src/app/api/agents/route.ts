@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { getAllAgents, createAgent } from "@/lib/db";
+import { getAllAgents, createAgent, ensureDb } from "@/lib/db";
 import { createAgentWallet } from "@/lib/wallet-service";
 
 export async function GET() {
+  await ensureDb();
   const agents = getAllAgents();
   return NextResponse.json(agents);
 }
 
 export async function POST(req: Request) {
+  await ensureDb();
   try {
     const body = await req.json();
     const { name, avatar, skills, description, hourly_rate, reputation } = body;

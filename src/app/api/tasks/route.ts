@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { getAllTasks } from "@/lib/db";
+import { getAllTasks, ensureDb } from "@/lib/db";
 import * as taskManager from "@/lib/task-manager";
 
 export async function GET() {
+  await ensureDb();
   const tasks = getAllTasks();
   return NextResponse.json(tasks);
 }
 
 export async function POST(req: Request) {
+  await ensureDb();
   try {
     const body = await req.json();
     const { requester_id, title, description, skill_required, budget } = body;
