@@ -1,0 +1,25 @@
+node_modules/
+.next/
+.env
+.env.local
+.env*.local
+dist/
+build/
+*.log
+.DS_Store
+.vercel
+.claude/
+
+# Database
+db/agentverse.db
+db/agentverse.db-wal
+db/agentverse.db-shm
+db/test.db
+db/test.db-wal
+db/test.db-shm
+
+# Build artifacts
+*.tsbuildinfo
+
+# Design progress
+ai/
