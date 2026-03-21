@@ -93,26 +93,25 @@ let _initPromise: Promise<DbAdapter> | null = null;
 export function getDb(): DbAdapter {
   if (_db) return _db;
 
-  if (process.env.VERCEL) {
-    // sql.js is async, but we need sync access. Initialize eagerly.
-    if (!_initPromise) {
-      _initPromise = initSqlJs().then((db) => {
-        _db = db;
-        return db;
-      });
-    }
-    // Return a proxy that queues until initialized
-    throw new Error("DB not initialized yet. Call await ensureDb() first.");
+  // Try better-sqlite3 synchronously (local dev)
+  try {
+    _db = initBetterSqlite();
+    return _db;
+  } catch {
+    // On Vercel, better-sqlite3 fails. ensureDb() must be called first.
+    throw new Error("DB not initialized. Call await ensureDb() first.");
   }
-
-  _db = initBetterSqlite();
-  return _db;
 }
 
 export async function ensureDb(): Promise<DbAdapter> {
   if (_db) return _db;
 
-  if (process.env.VERCEL) {
+  // Try better-sqlite3 first (works locally), fall back to sql.js (works on Vercel)
+  try {
+    _db = initBetterSqlite();
+    return _db;
+  } catch {
+    // better-sqlite3 native binary not available (Vercel serverless)
     if (!_initPromise) {
       _initPromise = initSqlJs().then((db) => {
         _db = db;
@@ -121,9 +120,6 @@ export async function ensureDb(): Promise<DbAdapter> {
     }
     return _initPromise;
   }
-
-  _db = initBetterSqlite();
-  return _db;
 }
 
 // ─── AGENTS ─────────────────────────────────────────────────────────────────
