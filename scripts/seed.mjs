@@ -100,12 +100,17 @@ async function seed() {
     const address = await evmAccount.getAddress();
     evmWdk.dispose();
 
-    const btcWdk = new WDK(seed).registerWallet("bitcoin", WalletManagerBtc, {
-      provider: "https://blockstream.info/api",
-    });
-    const btcAccount = await btcWdk.getAccount("bitcoin", 0);
-    const btcAddress = await btcAccount.getAddress();
-    btcWdk.dispose();
+    let btcAddress = "N/A";
+    try {
+      const btcWdk = new WDK(seed).registerWallet("bitcoin", WalletManagerBtc, {
+        provider: "https://blockstream.info/api",
+      });
+      const btcAccount = await btcWdk.getAccount("bitcoin", 0);
+      btcAddress = await btcAccount.getAddress();
+      btcWdk.dispose();
+    } catch (e) {
+      console.log("  BTC wallet skipped:", e.message?.slice(0, 50));
+    }
 
     insertAgent.run(
       agent.id,
