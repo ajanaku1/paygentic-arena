@@ -10,8 +10,7 @@ build/
 .vercel
 .claude/
 
-# Database
-db/agentverse.db
+# Database (WAL files only - main db is committed for Vercel)
 db/agentverse.db-wal
 db/agentverse.db-shm
 db/test.db

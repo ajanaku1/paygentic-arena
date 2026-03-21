@@ -3,18 +3,31 @@ import path from "path";
 import fs from "fs";
 import type { Agent, Task, ActivityLog, ActivityType } from "./types";
 
-const DB_PATH = path.join(process.cwd(), "db", "agentverse.db");
+const SOURCE_DB = path.join(process.cwd(), "db", "agentverse.db");
 const SCHEMA_PATH = path.join(process.cwd(), "db", "schema.sql");
+
+// On Vercel, cwd is read-only. Copy DB to /tmp if needed.
+function getDbPath(): string {
+  if (process.env.VERCEL) {
+    const tmpDb = "/tmp/agentverse.db";
+    if (!fs.existsSync(tmpDb) && fs.existsSync(SOURCE_DB)) {
+      fs.copyFileSync(SOURCE_DB, tmpDb);
+    }
+    return tmpDb;
+  }
+  return SOURCE_DB;
+}
 
 let _db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!_db) {
-    _db = new Database(DB_PATH);
+    const dbPath = getDbPath();
+    _db = new Database(dbPath);
     _db.pragma("journal_mode = WAL");
     _db.pragma("foreign_keys = ON");
 
-    // Run schema
+    // Run schema (creates tables if not exist)
     const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
     _db.exec(schema);
   }
