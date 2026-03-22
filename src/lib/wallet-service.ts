@@ -127,3 +127,33 @@ export async function createAgentWallet(): Promise<{ seedPhrase: string; address
   const { evmAddress, btcAddress } = await getMultiChainWallets(seedPhrase);
   return { seedPhrase, address: evmAddress, btcAddress };
 }
+
+// ─── ESCROW WALLET ─────────────────────────────────────────────────────────
+// Deterministic escrow wallet — same seed every time so funds accumulate in one place.
+// In production this would be a smart contract; for the hackathon demo, a dedicated WDK wallet.
+
+const ESCROW_SEED = process.env.ESCROW_SEED || "carbon cinnamon punch fatal anger width wage bicycle exhibit confirm humor club";
+
+export async function getEscrowAddress(): Promise<string> {
+  return getWalletAddress(ESCROW_SEED);
+}
+
+export async function getEscrowBalance(): Promise<string> {
+  return getBalance(ESCROW_SEED);
+}
+
+export async function lockEscrow(
+  fromSeed: string,
+  amountWei: string
+): Promise<{ hash: string; escrowAddress: string }> {
+  const escrowAddress = await getEscrowAddress();
+  const { hash } = await transferFunds(fromSeed, escrowAddress, amountWei);
+  return { hash, escrowAddress };
+}
+
+export async function releaseEscrow(
+  toAddress: string,
+  amountWei: string
+): Promise<{ hash: string }> {
+  return transferFunds(ESCROW_SEED, toAddress, amountWei);
+}

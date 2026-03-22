@@ -9,6 +9,10 @@ export interface Agent {
   hourly_rate: number
   reputation: number
   tasks_completed: number
+  api_key: string | null
+  endpoint_url: string | null
+  framework: string
+  status: string
   created_at: string
 }
 
@@ -23,9 +27,13 @@ export interface Task {
   budget: number
   result: string | null
   tx_hash: string | null
+  escrow_tx_hash: string | null
+  escrow_status: EscrowStatus
   created_at: string
   completed_at: string | null
 }
+
+export type EscrowStatus = 'none' | 'locked' | 'released' | 'refunded'
 
 export type TaskStatus =
   | 'open'

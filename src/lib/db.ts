@@ -116,13 +116,20 @@ export function getAgent(id: string): Agent | null {
 export function createAgent(agent: Omit<Agent, "tasks_completed" | "created_at">): Agent {
   const db = getDb();
   db.run(
-    `INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation, api_key, endpoint_url, framework, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     agent.id, agent.name, agent.avatar, JSON.stringify(agent.skills), agent.description,
-    agent.wallet_address, agent.seed_phrase, agent.hourly_rate, agent.reputation
+    agent.wallet_address, agent.seed_phrase, agent.hourly_rate, agent.reputation,
+    agent.api_key || null, agent.endpoint_url || null, agent.framework || "custom", agent.status || "active"
   );
-  logActivity("agent_registered", agent.id, null, `${agent.name} joined AgentVerse`);
+  logActivity("agent_registered", agent.id, null, `${agent.name} joined AgentVerse`, { framework: agent.framework });
   return getAgent(agent.id)!;
+}
+
+export function getAgentByApiKey(apiKey: string): Agent | null {
+  const db = getDb();
+  const row = db.get("SELECT * FROM agents WHERE api_key = ? AND status = 'active'", apiKey);
+  return row ? parseAgent(row) : null;
 }
 
 export function incrementTasksCompleted(agentId: string): void {
@@ -157,13 +164,15 @@ export function createTask(task: Pick<Task, "id" | "title" | "description" | "re
   return getTask(task.id)!;
 }
 
-export function updateTaskStatus(taskId: string, status: string, extra?: { provider_id?: string; result?: string; tx_hash?: string }): Task {
+export function updateTaskStatus(taskId: string, status: string, extra?: { provider_id?: string; result?: string; tx_hash?: string; escrow_tx_hash?: string; escrow_status?: string }): Task {
   const db = getDb();
   const sets: string[] = ["status = ?"];
   const params: any[] = [status];
   if (extra?.provider_id) { sets.push("provider_id = ?"); params.push(extra.provider_id); }
   if (extra?.result) { sets.push("result = ?"); params.push(extra.result); }
   if (extra?.tx_hash) { sets.push("tx_hash = ?"); params.push(extra.tx_hash); }
+  if (extra?.escrow_tx_hash) { sets.push("escrow_tx_hash = ?"); params.push(extra.escrow_tx_hash); }
+  if (extra?.escrow_status) { sets.push("escrow_status = ?"); params.push(extra.escrow_status); }
   if (status === "paid") { sets.push("completed_at = CURRENT_TIMESTAMP"); }
   params.push(taskId);
   db.run(`UPDATE tasks SET ${sets.join(", ")} WHERE id = ?`, ...params);
@@ -193,5 +202,12 @@ export function getStats() {
   const taskCount = (db.get("SELECT COUNT(*) as c FROM tasks") as any).c;
   const completedCount = (db.get("SELECT COUNT(*) as c FROM tasks WHERE status = 'paid'") as any).c;
   const volume = (db.get("SELECT COALESCE(SUM(budget), 0) as v FROM tasks WHERE status = 'paid'") as any).v;
-  return { agentCount, taskCount, completedCount, volume: Math.round(volume * 100) / 100 };
+  const escrowLocked = (db.get("SELECT COALESCE(SUM(budget), 0) as v FROM tasks WHERE escrow_status = 'locked'") as any).v;
+  const escrowReleased = (db.get("SELECT COALESCE(SUM(budget), 0) as v FROM tasks WHERE escrow_status = 'released'") as any).v;
+  return {
+    agentCount, taskCount, completedCount,
+    volume: Math.round(volume * 100) / 100,
+    escrowLocked: Math.round(escrowLocked * 100) / 100,
+    escrowReleased: Math.round(escrowReleased * 100) / 100,
+  };
 }

@@ -101,6 +101,26 @@ export default function TasksPage() {
                           {task.skill_required}
                         </span>
                       )}
+                      {/* Escrow indicator */}
+                      {task.escrow_status && task.escrow_status !== "none" && (
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span
+                            className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                            style={{
+                              backgroundColor: task.escrow_status === "locked" ? "#f59e0b20" : task.escrow_status === "released" ? "#22c55e20" : "#ef444420",
+                              color: task.escrow_status === "locked" ? "#f59e0b" : task.escrow_status === "released" ? "#22c55e" : "#ef4444",
+                              ...mono,
+                            }}
+                          >
+                            {task.escrow_status === "locked" ? "🔒 ESCROWED" : task.escrow_status === "released" ? "💰 RELEASED" : "↩ REFUNDED"}
+                          </span>
+                          {task.escrow_tx_hash && (
+                            <span className="text-[#555568] text-[8px] truncate max-w-[80px]" style={mono}>
+                              {task.escrow_tx_hash.slice(0, 10)}...
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#1e1e2e]/60">
                         <span className="text-emerald-400 text-xs font-bold" style={mono}>
                           {task.budget} USDT
@@ -148,8 +168,8 @@ export default function TasksPage() {
                     <span
                       className="text-[9px] px-1.5 py-0.5 rounded font-medium"
                       style={{
-                        backgroundColor: a.type.includes("payment") ? "#22c55e20" : "#3b82f620",
-                        color: a.type.includes("payment") ? "#22c55e" : "#3b82f6",
+                        backgroundColor: a.type.includes("escrow") ? "#f59e0b20" : a.type.includes("payment") ? "#22c55e20" : "#3b82f620",
+                        color: a.type.includes("escrow") ? "#f59e0b" : a.type.includes("payment") ? "#22c55e" : "#3b82f6",
                         ...mono,
                       }}
                     >

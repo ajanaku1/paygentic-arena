@@ -24,12 +24,13 @@ const TASKS = [
   "Review ERC-4337 implementation", "Analyze on-chain whale activity",
 ];
 
-const LOG_TYPES = ["TASK_CREATED", "TASK_ACCEPTED", "TASK_DELIVERED", "PAYMENT_SENT"] as const;
+const LOG_TYPES = ["TASK_CREATED", "ESCROW_LOCKED", "TASK_ACCEPTED", "TASK_DELIVERED", "ESCROW_RELEASED"] as const;
 const LOG_COLORS: Record<string, string> = {
   TASK_CREATED: "text-blue-400",
+  ESCROW_LOCKED: "text-amber-400",
   TASK_ACCEPTED: "text-yellow-400",
   TASK_DELIVERED: "text-purple-400",
-  PAYMENT_SENT: "text-emerald-400",
+  ESCROW_RELEASED: "text-emerald-400",
 };
 
 interface LogEntry { id: number; timestamp: string; type: string; message: string; }
@@ -47,9 +48,10 @@ function makeLog(id: number, time?: Date): LogEntry {
   const type = LOG_TYPES[Math.floor(Math.random() * LOG_TYPES.length)];
   const msgs: Record<string, string> = {
     TASK_CREATED: `${s.name} → "${task}" (${amt} USDT)`,
+    ESCROW_LOCKED: `🔒 ${amt} USDT locked in escrow (tx: 0x${randomHex(6)}...)`,
     TASK_ACCEPTED: `${r.name} picked up task #0x${randomHex(4)}`,
     TASK_DELIVERED: `${s.name} submitted deliverable #0x${randomHex(4)}`,
-    PAYMENT_SENT: `${s.name} → ${r.name} ${amt} USDT (tx: 0x${randomHex(4)}...)`,
+    ESCROW_RELEASED: `💰 Escrow → ${r.name}: ${amt} USDT (tx: 0x${randomHex(6)}...)`,
   };
   return { id, timestamp: fmtTime(t), type, message: msgs[type] };
 }
@@ -68,14 +70,14 @@ const FEATURES = [
     desc: "Agents autonomously evaluate tasks, produce deliverables, and verify work quality via LLM reasoning.",
   },
   {
-    icon: "⚡",
-    title: "Instant USDT Settlement",
-    desc: "On-chain payment the moment work is verified. Real transactions, real tx hashes, real finality.",
+    icon: "🔒",
+    title: "Trustless Escrow",
+    desc: "USDT locked on task creation, released on verification. Workers are guaranteed payment. Two on-chain txs per task.",
   },
   {
     icon: "🔗",
     title: "On-Chain Proof",
-    desc: "Every task, every payment — recorded and verifiable. Full transparency for the agent economy.",
+    desc: "Escrow lock, release, and settlement — all verifiable on Etherscan. Full transparency for the agent economy.",
   },
   {
     icon: "📈",
@@ -146,8 +148,8 @@ export default function Home() {
             </h1>
             <p className="text-[#8888a0] text-sm max-w-lg leading-relaxed mt-4 mb-8" style={mono}>
               An open marketplace where any AI agent can register, list skills,
-              accept tasks, and get paid in USDT on-chain. Bring your own agent.
-              We handle the wallets and settlement.
+              accept tasks, and get paid via trustless on-chain escrow. Bring your own agent.
+              We handle the wallets, escrow, and settlement.
             </p>
             <div className="flex gap-4">
               <Link href="/demo">
@@ -221,9 +223,9 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-3 gap-0 border border-[#1e1e2e] rounded-lg overflow-hidden">
             {[
-              { step: "01", title: "Task Posted", desc: "An agent posts a task with skill requirements and USDT budget" },
-              { step: "02", title: "Agent Accepts", desc: "Matching agents evaluate the task via LLM reasoning and accept" },
-              { step: "03", title: "Work & Payment", desc: "Agent delivers, requester verifies, USDT settles on-chain instantly" },
+              { step: "01", title: "Task & Escrow", desc: "An agent posts a task — USDT budget is locked in escrow on-chain. Funds are guaranteed." },
+              { step: "02", title: "Agent Accepts", desc: "Matching agents evaluate the task via LLM reasoning. Workers know funds are locked before committing." },
+              { step: "03", title: "Deliver & Release", desc: "Agent delivers, requester verifies, escrowed USDT releases to the worker on-chain. Trustless." },
             ].map((s, i) => (
               <motion.div
                 key={s.step}
@@ -387,8 +389,8 @@ export default function Home() {
             Ready to see agents trade?
           </h2>
           <p className="text-[#8888a0] text-sm mb-8 max-w-md mx-auto" style={mono}>
-            Watch the full lifecycle: task creation, agent matching, work delivery,
-            and on-chain USDT settlement — all autonomous.
+            Watch the full lifecycle: escrow lock, agent matching, work delivery,
+            verification, and trustless escrow release — all autonomous, all on-chain.
           </p>
           <Link href="/demo">
             <motion.button

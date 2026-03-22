@@ -70,12 +70,12 @@ const SCENARIOS = [
 ];
 
 const INITIAL_STEPS: DemoStep[] = [
-  { id: 0, title: "Create Task", description: "Requester posts a task with skill requirements and USDT budget", icon: "📋", apiAction: "create", status: "pending" },
+  { id: 0, title: "Create Task & Lock Escrow", description: "Requester posts a task and USDT budget is locked in escrow on-chain", icon: "🔒", apiAction: "create", status: "pending" },
   { id: 1, title: "Agent Discovery", description: "System finds matching agents and asks them to evaluate the task via LLM", icon: "🔍", apiAction: "assign", status: "pending" },
-  { id: 2, title: "Work Begins", description: "Agent accepts and starts working on the deliverable", icon: "⚙️", apiAction: "start", status: "pending" },
+  { id: 2, title: "Work Begins", description: "Agent accepts and starts working — funds remain locked in escrow", icon: "⚙️", apiAction: "start", status: "pending" },
   { id: 3, title: "Deliver Work", description: "Agent produces a deliverable using LLM-powered reasoning", icon: "📦", apiAction: "deliver", status: "pending" },
   { id: 4, title: "Verify Quality", description: "Requester evaluates the deliverable and rates the work", icon: "✅", apiAction: "verify", status: "pending" },
-  { id: 5, title: "Settle Payment", description: "USDT transfers on-chain via WDK from requester to provider", icon: "💰", apiAction: "pay", status: "pending" },
+  { id: 5, title: "Release Escrow", description: "Escrowed USDT released on-chain from escrow wallet to provider", icon: "💰", apiAction: "pay", status: "pending" },
 ];
 
 // ─── PAGE ───────────────────────────────────────────────────────────────────
@@ -155,6 +155,11 @@ export default function DemoPage() {
       if (stepIndex === 0 && data.task?.id) {
         setTaskId(data.task.id);
         addLog(`✓ Task created: ${data.task.id.slice(0, 8)}...`);
+        if (data.step?.data?.escrow) {
+          const esc = data.step.data.escrow;
+          addLog(`🔒 Escrow ${esc.status}: ${esc.txHash?.slice(0, 18)}...${esc.simulated ? " (simulated)" : ""}`);
+          if (esc.explorerUrl) addLog(`  ↗ ${esc.explorerUrl}`);
+        }
       }
 
       // Log step-specific details
@@ -204,8 +209,8 @@ export default function DemoPage() {
       }
       addLog("");
       addLog("═══════════════════════════════════════");
-      addLog("✓ DEMO COMPLETE — Full lifecycle executed");
-      addLog("  Task → Assignment → Delivery → Verification → Payment");
+      addLog("✓ DEMO COMPLETE — Full lifecycle with trustless escrow");
+      addLog("  Escrow Lock → Assignment → Delivery → Verification → Escrow Release");
       addLog("═══════════════════════════════════════");
       setIsComplete(true);
     } catch {
@@ -257,7 +262,7 @@ export default function DemoPage() {
               Agent-to-Agent Transaction
             </h1>
             <p className="text-[#8888a0] text-xs" style={mono}>
-              Watch autonomous AI agents negotiate, deliver work, and settle payment on-chain.
+              Watch autonomous AI agents negotiate, deliver work, and settle via trustless on-chain escrow.
             </p>
           </div>
 
@@ -398,8 +403,45 @@ export default function DemoPage() {
 
                   {/* Step result badge */}
                   {step.result?.data && (
-                    <div className="shrink-0">
-                      {step.result.data.txHash && (
+                    <div className="shrink-0 flex items-center gap-1 flex-wrap justify-end">
+                      {/* Escrow lock badge */}
+                      {step.result.data.escrow && (
+                        step.result.data.escrow.explorerUrl ? (
+                          <a
+                            href={step.result.data.escrow.explorerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium hover:bg-amber-500/20 transition-colors underline decoration-amber-400/30"
+                            style={mono}
+                          >
+                            🔒 escrow: {step.result.data.escrow.txHash?.slice(0, 10)}... ↗
+                          </a>
+                        ) : (
+                          <span className="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium" style={mono}>
+                            🔒 escrowed
+                          </span>
+                        )
+                      )}
+                      {/* Release / settlement tx */}
+                      {step.result.data.releaseTxHash && (
+                        step.result.data.explorerUrl ? (
+                          <a
+                            href={step.result.data.explorerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium hover:bg-emerald-500/20 transition-colors underline decoration-emerald-400/30"
+                            style={mono}
+                          >
+                            💰 released: {step.result.data.releaseTxHash.slice(0, 10)}... ↗
+                          </a>
+                        ) : (
+                          <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium" style={mono}>
+                            💰 released
+                          </span>
+                        )
+                      )}
+                      {/* Legacy txHash (non-escrow steps) */}
+                      {step.result.data.txHash && !step.result.data.releaseTxHash && !step.result.data.escrow && (
                         step.result.data.explorerUrl ? (
                           <a
                             href={step.result.data.explorerUrl}
@@ -416,13 +458,13 @@ export default function DemoPage() {
                           </span>
                         )
                       )}
-                      {step.result.data.agentName && !step.result.data.txHash && (
+                      {step.result.data.agentName && !step.result.data.txHash && !step.result.data.escrow && (
                         <span className="text-[9px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-medium" style={mono}>
                           {step.result.data.agentName}
                         </span>
                       )}
                       {step.result.data.rating && (
-                        <span className="text-[9px] px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 font-medium ml-1" style={mono}>
+                        <span className="text-[9px] px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 font-medium" style={mono}>
                           {step.result.data.rating}/5 ★
                         </span>
                       )}

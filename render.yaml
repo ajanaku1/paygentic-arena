@@ -13,3 +13,5 @@ services:
         value: ethereum
       - key: NODE_ENV
         value: production
+      - key: ESCROW_SEED
+        sync: false

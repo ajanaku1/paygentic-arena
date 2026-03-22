@@ -34,8 +34,44 @@ export async function createTask(
     budget,
   });
 
+  // ── Lock budget into escrow ──────────────────────────────────────────────
+  let escrowTxHash: string | null = null;
+  let escrowStatus: string = "none";
+  let escrowError: string | null = null;
+
+  try {
+    const result = await wallet.lockEscrow(
+      requester.seed_phrase,
+      "100000000000000" // 0.0001 ETH as budget proxy
+    );
+    escrowTxHash = result.hash;
+    escrowStatus = "locked";
+  } catch (e: any) {
+    escrowError = e.message || String(e);
+    console.error("[createTask] Escrow lock failed:", escrowError);
+    // Simulated escrow for demo
+    escrowTxHash = `0xESCROW_${Array.from({ length: 54 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+    escrowStatus = "locked";
+  }
+
+  const isSimulated = escrowTxHash?.startsWith("0xESCROW_") ?? false;
+
+  // Update task with escrow info
+  const updated = db.updateTaskStatus(task.id, "open", {
+    escrow_tx_hash: escrowTxHash || undefined,
+    escrow_status: escrowStatus,
+  });
+
+  db.logActivity(
+    "escrow_locked",
+    requesterId,
+    task.id,
+    `${requester.name} locked ${budget} USDT in escrow for "${title}"${isSimulated ? " (simulated)" : ""}`,
+    { escrowTxHash, amount: budget, simulated: isSimulated }
+  );
+
   return {
-    task,
+    task: updated,
     step: {
       step: "task_created",
       status: "success",
@@ -45,6 +81,12 @@ export async function createTask(
         title,
         budget,
         skillRequired,
+        escrow: {
+          status: escrowStatus,
+          txHash: escrowTxHash,
+          simulated: isSimulated,
+          explorerUrl: isSimulated ? null : `https://sepolia.etherscan.io/tx/${escrowTxHash}`,
+        },
       },
       timestamp: new Date().toISOString(),
     },
@@ -264,16 +306,15 @@ export async function settlePayment(
   let txHash: string;
   let settlementError: string | null = null;
   try {
-    // Send a small real ETH transfer as proof-of-settlement (0.0001 ETH)
-    const result = await wallet.transferFunds(
-      requester.seed_phrase,
+    // Release escrowed funds to the worker — escrow wallet → provider
+    const result = await wallet.releaseEscrow(
       provider.wallet_address,
       "100000000000000" // 0.0001 ETH
     );
     txHash = result.hash;
   } catch (e: any) {
     settlementError = e.message || String(e);
-    console.error("[settlePayment] Transfer failed:", settlementError);
+    console.error("[settlePayment] Escrow release failed:", settlementError);
     // Fallback: simulated tx hash
     txHash = `0xSIM_${Array.from({ length: 58 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
   }
@@ -281,22 +322,33 @@ export async function settlePayment(
   const isSimulated = txHash.startsWith("0xSIM_");
   const txLabel = isSimulated ? "(simulated - testnet)" : "";
 
-  const updated = db.updateTaskStatus(taskId, "paid", { tx_hash: txHash });
+  const updated = db.updateTaskStatus(taskId, "paid", {
+    tx_hash: txHash,
+    escrow_status: "released",
+  });
   db.incrementTasksCompleted(provider.id);
+
+  db.logActivity(
+    "escrow_released",
+    null,
+    taskId,
+    `Escrow released: ${task.budget} USDT → ${provider.name} ${txLabel}`.trim(),
+    { txHash, amount: task.budget, escrowTxHash: task.escrow_tx_hash, simulated: isSimulated }
+  );
 
   db.logActivity(
     "payment_sent",
     requester.id,
     taskId,
-    `${requester.name} → ${provider.name}: ${task.budget} USDT ${txLabel} (tx: ${txHash.slice(0, 14)}...)`.trim(),
-    { txHash, amount: task.budget, from: requester.wallet_address, to: provider.wallet_address, simulated: isSimulated }
+    `${requester.name} → ${provider.name}: ${task.budget} USDT via escrow ${txLabel} (tx: ${txHash.slice(0, 14)}...)`.trim(),
+    { txHash, amount: task.budget, from: "escrow", to: provider.wallet_address, simulated: isSimulated }
   );
 
   db.logActivity(
     "payment_received",
     provider.id,
     taskId,
-    `${provider.name} received ${task.budget} USDT from ${requester.name} ${txLabel}`.trim(),
+    `${provider.name} received ${task.budget} USDT from escrow ${txLabel}`.trim(),
     { txHash, amount: task.budget, simulated: isSimulated }
   );
 
@@ -312,7 +364,9 @@ export async function settlePayment(
         to: provider.name,
         toAddress: provider.wallet_address,
         amount: task.budget,
-        txHash,
+        mechanism: "escrow_release",
+        escrowTxHash: task.escrow_tx_hash,
+        releaseTxHash: txHash,
         simulated: isSimulated,
         settlementError: settlementError || undefined,
         explorerUrl: isSimulated ? null : `https://sepolia.etherscan.io/tx/${txHash}`,

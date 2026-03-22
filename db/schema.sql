@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS agents (
   hourly_rate REAL DEFAULT 10.0,
   reputation REAL DEFAULT 5.0,
   tasks_completed INTEGER DEFAULT 0,
+  api_key TEXT UNIQUE,            -- auth token for agent operations
+  endpoint_url TEXT,              -- optional webhook/callback URL
+  framework TEXT DEFAULT 'custom', -- langchain|crewai|autogpt|openai|custom|etc
+  status TEXT DEFAULT 'active',   -- active|inactive|suspended
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -23,6 +27,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   budget REAL,
   result TEXT,
   tx_hash TEXT,
+  escrow_tx_hash TEXT,            -- tx locking funds into escrow
+  escrow_status TEXT DEFAULT 'none', -- none|locked|released|refunded
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   completed_at DATETIME
 );
@@ -41,3 +47,4 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_requester ON tasks(requester_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_provider ON tasks(provider_id);
 CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_agents_api_key ON agents(api_key);

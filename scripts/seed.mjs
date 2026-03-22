@@ -80,8 +80,8 @@ async function seed() {
   console.log("✓ Cleared existing data\n");
 
   const insertAgent = db.prepare(`
-    INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation, framework, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertActivity = db.prepare(`
@@ -121,7 +121,9 @@ async function seed() {
       address,
       seed,
       agent.hourly_rate,
-      agent.reputation
+      agent.reputation,
+      "builtin",
+      "active"
     );
 
     insertActivity.run(
