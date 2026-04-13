@@ -40,7 +40,10 @@ function initBetterSqlite(): DbAdapter {
 
 async function initSqlJs(): Promise<DbAdapter> {
   const initSqlJsLib = (await import("sql.js")).default;
-  const SQL = await initSqlJsLib();
+  const sqlJsDir = path.dirname(require.resolve("sql.js"));
+  const SQL = await initSqlJsLib({
+    locateFile: (file: string) => path.join(sqlJsDir, file),
+  });
   let db: any;
 
   if (fs.existsSync(SOURCE_DB)) {
