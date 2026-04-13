@@ -4,9 +4,13 @@ import { createAgentWallet } from "@/lib/wallet-service";
 import { generateApiKey, stripSecrets } from "@/lib/auth";
 
 export async function GET() {
-  await ensureDb();
-  const agents = getAllAgents().map(stripSecrets);
-  return NextResponse.json(agents);
+  try {
+    await ensureDb();
+    const agents = getAllAgents().map(stripSecrets);
+    return NextResponse.json(agents);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message, stack: e.stack?.split("\n").slice(0, 5) }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
