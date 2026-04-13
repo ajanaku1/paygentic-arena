@@ -61,6 +61,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const detail = e.cause?.message || e.code || "";
+    return NextResponse.json({ error: e.message, detail }, { status: 500 });
   }
 }

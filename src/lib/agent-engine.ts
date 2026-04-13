@@ -8,6 +8,7 @@ function getLLM(): OpenAI {
     _client = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
+      timeout: 30000,
     });
   }
   return _client;
