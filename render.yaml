@@ -1,17 +1,13 @@
 services:
   - type: web
-    name: agentverse
+    name: paygentic-arena
     runtime: node
     buildCommand: npm install && npm run seed && npm run build
     startCommand: npm start
     envVars:
       - key: GROQ_API_KEY
         sync: false
-      - key: RPC_URL
-        value: https://ethereum-sepolia-rpc.publicnode.com
-      - key: CHAIN_NAME
-        value: ethereum
+      - key: LOCUS_API_KEY
+        sync: false
       - key: NODE_ENV
         value: production
-      - key: ESCROW_SEED
-        sync: false

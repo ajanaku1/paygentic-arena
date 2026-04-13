@@ -112,14 +112,14 @@ export default function AgentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="text-emerald-400 text-xs tracking-[0.3em] uppercase mb-2" style={mono}>
+          <p className="text-violet-400 text-xs tracking-[0.3em] uppercase mb-2" style={mono}>
             ◆ Open Agent Registry
           </p>
           <h1 className="text-3xl font-bold" style={mono}>
             {agents.length} Agents Online
           </h1>
           <p className="text-[#555568] text-xs mt-1" style={mono}>
-            Any AI agent can register via API. Self-custodial WDK wallets issued on registration.
+            Any AI agent can register via API. Self-custodial Locus wallets issued on registration.
           </p>
         </div>
         <button
@@ -147,14 +147,14 @@ export default function AgentsPage() {
           >
             <div className="border border-[#1e1e2e] rounded-lg p-6 bg-[#0d1117]">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-emerald-400 text-xs tracking-[0.2em] uppercase" style={mono}>Register Your Agent</span>
+                <span className="text-violet-400 text-xs tracking-[0.2em] uppercase" style={mono}>Register Your Agent</span>
                 <span className="text-[#555568] text-xs" style={mono}>— works with any framework</span>
               </div>
 
               {regResult ? (
                 <div className="space-y-4">
-                  <div className="border border-emerald-500/30 rounded-lg p-4 bg-emerald-500/5">
-                    <p className="text-emerald-400 text-sm font-bold mb-3" style={mono}>Agent Registered</p>
+                  <div className="border border-violet-500/30 rounded-lg p-4 bg-violet-500/5">
+                    <p className="text-violet-400 text-sm font-bold mb-3" style={mono}>Agent Registered</p>
                     <div className="space-y-2">
                       <div>
                         <span className="text-[#555568] text-xs" style={mono}>API Key (save this — shown only once):</span>
@@ -197,7 +197,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                     <input
                       type="text" required value={name} onChange={(e) => setName(e.target.value)}
                       placeholder="My AI Agent"
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50"
                       style={mono}
                     />
                   </div>
@@ -206,7 +206,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                     <input
                       type="text" required value={skills} onChange={(e) => setSkills(e.target.value)}
                       placeholder="Code Review, Bug Hunting, Testing"
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50"
                       style={mono}
                     />
                   </div>
@@ -216,15 +216,15 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                       value={description} onChange={(e) => setDescription(e.target.value)}
                       placeholder="What does your agent do?"
                       rows={2}
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50 resize-none"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50 resize-none"
                       style={mono}
                     />
                   </div>
                   <div>
-                    <label className="text-[#555568] text-[10px] uppercase tracking-wider" style={mono}>Rate (USDT/task)</label>
+                    <label className="text-[#555568] text-[10px] uppercase tracking-wider" style={mono}>Rate (USDC/task)</label>
                     <input
                       type="number" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50"
                       style={mono}
                     />
                   </div>
@@ -232,7 +232,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                     <label className="text-[#555568] text-[10px] uppercase tracking-wider" style={mono}>Framework</label>
                     <select
                       value={framework} onChange={(e) => setFramework(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50"
                       style={mono}
                     >
                       <option value="custom">Custom</option>
@@ -249,7 +249,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                     <input
                       type="url" value={endpointUrl} onChange={(e) => setEndpointUrl(e.target.value)}
                       placeholder="https://my-agent.example.com/webhook"
-                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-emerald-500/50"
+                      className="mt-1 w-full px-3 py-2 bg-[#0a0a0f] border border-[#1e1e2e] rounded text-sm text-[#e4e4ef] outline-none focus:border-violet-500/50"
                       style={mono}
                     />
                   </div>
@@ -261,7 +261,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                   <div className="md:col-span-2">
                     <button
                       type="submit" disabled={registering}
-                      className="px-6 py-2.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-sm hover:bg-emerald-500/30 transition-all disabled:opacity-50"
+                      className="px-6 py-2.5 rounded bg-violet-500/20 border border-violet-500/40 text-violet-400 text-sm hover:bg-violet-500/30 transition-all disabled:opacity-50"
                       style={mono}
                     >
                       {registering ? "Creating wallet..." : "Register & Get API Key"}
@@ -311,7 +311,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
                   className="text-xs font-bold px-2 py-0.5 rounded"
                   style={{ backgroundColor: color + "20", color, ...mono }}
                 >
-                  {agent.hourly_rate} USDT
+                  {agent.hourly_rate} USDC
                 </span>
               </div>
 
@@ -347,7 +347,7 @@ curl -X POST -H "X-API-Key: ${regResult.api_key}" \\
               </div>
 
               <div className="flex items-center gap-2 pt-3 border-t border-[#1e1e2e]">
-                <div className={`w-2 h-2 rounded-full ${agent.status === "active" ? "bg-emerald-500" : "bg-yellow-500"}`} />
+                <div className={`w-2 h-2 rounded-full ${agent.status === "active" ? "bg-violet-500" : "bg-yellow-500"}`} />
                 <span className="text-[#555568] text-[10px] truncate" style={mono}>
                   {agent.wallet_address}
                 </span>

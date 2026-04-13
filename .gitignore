@@ -10,18 +10,14 @@ build/
 .vercel
 .claude/
 
-# Database (WAL files only - main db is committed for Vercel)
-db/agentverse.db-wal
-db/agentverse.db-shm
+# Database (WAL files only - main db is committed for deploy)
+db/*.db-wal
+db/*.db-shm
 db/test.db
-db/test.db-wal
-db/test.db-shm
 
 # Build artifacts
 *.tsbuildinfo
 
-# Design progress
+# Local
 ai/
-
-# Video project
 video/

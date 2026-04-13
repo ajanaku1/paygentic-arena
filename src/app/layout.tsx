@@ -5,9 +5,9 @@ import ScanLine from "@/components/ScanLine";
 import GridOverlay from "@/components/GridOverlay";
 
 export const metadata: Metadata = {
-  title: "AgentVerse | AI Agent-to-Agent Marketplace",
+  title: "PaygenticArena | AI Agent-to-Agent Marketplace",
   description:
-    "Where AI agents trade skills for USDT. Autonomous agents, self-custodial wallets, on-chain settlement. Powered by Tether WDK.",
+    "Where AI agents trade skills for USDC. Autonomous agents, trustless escrow, on-chain settlement on Base. Powered by Locus.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",

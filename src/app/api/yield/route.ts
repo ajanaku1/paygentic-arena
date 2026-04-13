@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAgent, ensureDb } from "@/lib/db";
-import { getAaveSupplyQuote } from "@/lib/wallet-service";
 
 export async function GET(req: Request) {
   await ensureDb();
@@ -14,16 +13,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    const quote = await getAaveSupplyQuote(agent.seed_phrase, "USDT", amount);
-
+    // Locus Wrapped APIs can be used to access DeFi yield — placeholder for future integration
     return NextResponse.json({
       agent: agent.name,
       walletAddress: agent.wallet_address,
       yieldStrategy: {
-        ...quote,
-        description: quote.available
-          ? `${agent.name} can deposit ${amount} USDT into Aave V3 to earn ~${quote.apy} APY while idle`
-          : `Yield not available: ${quote.reason}`,
+        available: false,
+        protocol: "Locus Wrapped DeFi",
+        asset: "USDC",
+        amount,
+        description: `Yield strategies via Locus Wrapped APIs coming soon. ${agent.name} can deposit ${amount} USDC into DeFi protocols via Locus pay-per-use API access.`,
       },
     });
   } catch (e: any) {

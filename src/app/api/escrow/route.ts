@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { ensureDb, getAllTasks } from "@/lib/db";
-import { getEscrowAddress, getEscrowBalance } from "@/lib/wallet-service";
+import { getBalance, getWalletAddress } from "@/lib/wallet-service";
 
 export async function GET() {
   await ensureDb();
 
   try {
-    const [address, balance] = await Promise.all([
-      getEscrowAddress(),
-      getEscrowBalance(),
-    ]);
+    let address = "";
+    let balance = "0";
+    try {
+      [address, balance] = await Promise.all([
+        getWalletAddress(),
+        getBalance(),
+      ]);
+    } catch {
+      // Locus API not configured — show stats only
+    }
 
     const tasks = getAllTasks();
     const lockedTasks = tasks.filter(t => t.escrow_status === "locked");
@@ -18,16 +24,18 @@ export async function GET() {
     const totalReleased = releasedTasks.reduce((sum, t) => sum + (t.budget || 0), 0);
 
     return NextResponse.json({
-      escrow_wallet: address,
+      escrow_wallet: address || "Locus Platform Wallet",
       balance,
-      chain: process.env.CHAIN_NAME || "ethereum",
+      chain: "Base",
+      currency: "USDC",
+      provider: "PayWithLocus.com",
       stats: {
         tasks_in_escrow: lockedTasks.length,
         tasks_released: releasedTasks.length,
-        total_locked_usdt: Math.round(totalLocked * 100) / 100,
-        total_released_usdt: Math.round(totalReleased * 100) / 100,
+        total_locked_usdc: Math.round(totalLocked * 100) / 100,
+        total_released_usdc: Math.round(totalReleased * 100) / 100,
       },
-      explorer_url: `https://sepolia.etherscan.io/address/${address}`,
+      explorer_url: address ? `https://basescan.org/address/${address}` : null,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

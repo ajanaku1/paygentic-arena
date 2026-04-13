@@ -48,7 +48,7 @@ const SCENARIOS = [
     requesterName: "Atlas",
     requesterAvatar: "🌐",
     taskTitle: "Review TypeScript SDK for type safety and edge cases",
-    taskDescription: "Review the WDK integration module for proper error handling, type safety, and edge cases. Focus on transaction failure recovery, seed phrase validation, and concurrent wallet operations.",
+    taskDescription: "Review the Locus payment integration module for proper error handling, type safety, and edge cases. Focus on transaction failure recovery, checkout session handling, and concurrent payment operations.",
     skillRequired: "Code Review",
     budget: 15,
     expectedProvider: "Nova",
@@ -60,7 +60,7 @@ const SCENARIOS = [
     requester: "atlas",
     requesterName: "Atlas",
     requesterAvatar: "🌐",
-    taskTitle: "Write developer docs for the AgentVerse API",
+    taskTitle: "Write developer docs for the PaygenticArena API",
     taskDescription: "Create comprehensive API documentation covering all endpoints: /api/agents, /api/tasks, /api/demo. Include request/response examples, authentication notes, and error handling patterns.",
     skillRequired: "Content Writing",
     budget: 8,
@@ -70,12 +70,12 @@ const SCENARIOS = [
 ];
 
 const INITIAL_STEPS: DemoStep[] = [
-  { id: 0, title: "Create Task & Lock Escrow", description: "Requester posts a task and USDT budget is locked in escrow on-chain", icon: "🔒", apiAction: "create", status: "pending" },
+  { id: 0, title: "Create Task & Lock Escrow", description: "Requester posts a task and USDC budget is locked in escrow on-chain", icon: "🔒", apiAction: "create", status: "pending" },
   { id: 1, title: "Agent Discovery", description: "System finds matching agents and asks them to evaluate the task via LLM", icon: "🔍", apiAction: "assign", status: "pending" },
   { id: 2, title: "Work Begins", description: "Agent accepts and starts working — funds remain locked in escrow", icon: "⚙️", apiAction: "start", status: "pending" },
   { id: 3, title: "Deliver Work", description: "Agent produces a deliverable using LLM-powered reasoning", icon: "📦", apiAction: "deliver", status: "pending" },
   { id: 4, title: "Verify Quality", description: "Requester evaluates the deliverable and rates the work", icon: "✅", apiAction: "verify", status: "pending" },
-  { id: 5, title: "Release Escrow", description: "Escrowed USDT released on-chain from escrow wallet to provider", icon: "💰", apiAction: "pay", status: "pending" },
+  { id: 5, title: "Release Escrow", description: "Escrowed USDC released on-chain from escrow wallet to provider", icon: "💰", apiAction: "pay", status: "pending" },
 ];
 
 // ─── PAGE ───────────────────────────────────────────────────────────────────
@@ -195,7 +195,7 @@ export default function DemoPage() {
     resetDemo();
     setIsRunning(true);
     addLog(`▶ Starting demo: "${scenario.title}"`);
-    addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDT`);
+    addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDC`);
     addLog("");
 
     try {
@@ -228,7 +228,7 @@ export default function DemoPage() {
 
     if (nextStep === 0) {
       addLog(`▶ Starting demo: "${scenario.title}"`);
-      addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDT`);
+      addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDC`);
       addLog("");
     }
 
@@ -255,7 +255,7 @@ export default function DemoPage() {
         <div className="p-6 flex flex-col gap-6">
           {/* Header */}
           <div>
-            <p className="text-emerald-400 text-xs tracking-[0.3em] uppercase mb-2" style={mono}>
+            <p className="text-violet-400 text-xs tracking-[0.3em] uppercase mb-2" style={mono}>
               ◆ Interactive Demo
             </p>
             <h1 className="text-2xl font-bold mb-1" style={mono}>
@@ -279,14 +279,14 @@ export default function DemoPage() {
                   disabled={isRunning}
                   className={`flex-1 px-3 py-2.5 rounded border text-xs text-left transition-all cursor-pointer ${
                     scenario.id === s.id
-                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+                      ? "border-violet-500/50 bg-violet-500/10 text-violet-400"
                       : "border-[#1e1e2e] bg-[#0d1117] text-[#8888a0] hover:border-[#2e2e3e]"
                   } disabled:opacity-50`}
                   style={mono}
                 >
                   <span className="block font-medium">{s.title}</span>
                   <span className="block text-[10px] mt-0.5 opacity-70">
-                    {s.requesterAvatar} {s.requesterName} → {s.expectedProviderAvatar} {s.expectedProvider} · {s.budget} USDT
+                    {s.requesterAvatar} {s.requesterName} → {s.expectedProviderAvatar} {s.expectedProvider} · {s.budget} USDC
                   </span>
                 </button>
               ))}
@@ -297,7 +297,7 @@ export default function DemoPage() {
           <div className="border border-[#1e1e2e] rounded-lg p-4 bg-[#0d1117]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] text-[#8888a0] uppercase tracking-widest" style={mono}>Task Details</span>
-              <span className="text-emerald-400 text-xs font-bold" style={mono}>{scenario.budget} USDT</span>
+              <span className="text-violet-400 text-xs font-bold" style={mono}>{scenario.budget} USDC</span>
             </div>
             <h3 className="text-[#e4e4ef] text-sm font-medium mb-1" style={mono}>{scenario.taskTitle}</h3>
             <p className="text-[#8888a0] text-[11px] leading-relaxed" style={mono}>{scenario.taskDescription}</p>
@@ -318,7 +318,7 @@ export default function DemoPage() {
               whileTap={{ scale: 0.98 }}
               onClick={runAll}
               disabled={isRunning || isComplete}
-              className="px-6 py-2.5 bg-emerald-500 text-[#0a0a0f] font-bold text-xs rounded tracking-wider uppercase cursor-pointer hover:bg-emerald-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-violet-500 text-[#0a0a0f] font-bold text-xs rounded tracking-wider uppercase cursor-pointer hover:bg-violet-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={mono}
             >
               {isRunning ? "Running..." : isComplete ? "Complete" : "▶ Run All Steps"}
@@ -328,7 +328,7 @@ export default function DemoPage() {
               whileTap={{ scale: 0.98 }}
               onClick={runSingleStep}
               disabled={isRunning || isComplete}
-              className="px-6 py-2.5 border border-[#1e1e2e] text-[#e4e4ef] font-medium text-xs rounded tracking-wider uppercase cursor-pointer hover:border-emerald-500/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 border border-[#1e1e2e] text-[#e4e4ef] font-medium text-xs rounded tracking-wider uppercase cursor-pointer hover:border-violet-500/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={mono}
             >
               Step →
@@ -357,9 +357,9 @@ export default function DemoPage() {
                 }}
                 className={`border rounded-lg p-4 transition-all ${
                   step.status === "running"
-                    ? "border-emerald-500/50 bg-emerald-500/5"
+                    ? "border-violet-500/50 bg-violet-500/5"
                     : step.status === "completed"
-                    ? "border-emerald-500/20 bg-[#0d1117]"
+                    ? "border-violet-500/20 bg-[#0d1117]"
                     : step.status === "error"
                     ? "border-red-500/30 bg-red-500/5"
                     : "border-[#1e1e2e] bg-[#0d1117]"
@@ -369,9 +369,9 @@ export default function DemoPage() {
                   {/* Status Indicator */}
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0">
                     {step.status === "running" ? (
-                      <span className="animate-spin text-emerald-400">⟳</span>
+                      <span className="animate-spin text-violet-400">⟳</span>
                     ) : step.status === "completed" ? (
-                      <span className="text-emerald-400">✓</span>
+                      <span className="text-violet-400">✓</span>
                     ) : step.status === "error" ? (
                       <span className="text-red-400">✗</span>
                     ) : (
@@ -383,7 +383,7 @@ export default function DemoPage() {
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-xs font-medium ${
-                          step.status === "completed" ? "text-emerald-400" :
+                          step.status === "completed" ? "text-violet-400" :
                           step.status === "running" ? "text-[#e4e4ef]" :
                           step.status === "error" ? "text-red-400" :
                           "text-[#8888a0]"
@@ -429,13 +429,13 @@ export default function DemoPage() {
                             href={step.result.data.explorerUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium hover:bg-emerald-500/20 transition-colors underline decoration-emerald-400/30"
+                            className="text-[9px] px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 font-medium hover:bg-violet-500/20 transition-colors underline decoration-violet-400/30"
                             style={mono}
                           >
                             💰 released: {step.result.data.releaseTxHash.slice(0, 10)}... ↗
                           </a>
                         ) : (
-                          <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium" style={mono}>
+                          <span className="text-[9px] px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 font-medium" style={mono}>
                             💰 released
                           </span>
                         )
@@ -447,7 +447,7 @@ export default function DemoPage() {
                             href={step.result.data.explorerUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium hover:bg-emerald-500/20 transition-colors underline decoration-emerald-400/30"
+                            className="text-[9px] px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 font-medium hover:bg-violet-500/20 transition-colors underline decoration-violet-400/30"
                             style={mono}
                           >
                             ✓ tx: {step.result.data.txHash.slice(0, 10)}... ↗
@@ -488,7 +488,7 @@ export default function DemoPage() {
                             return (
                               <div key={k} className="flex gap-2 text-[10px]" style={mono}>
                                 <span className="text-[#555568] shrink-0 w-28">{k}:</span>
-                                <a href={String(v)} target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline decoration-emerald-400/30 hover:text-emerald-300 break-all">
+                                <a href={String(v)} target="_blank" rel="noopener noreferrer" className="text-violet-400 underline decoration-violet-400/30 hover:text-violet-300 break-all">
                                   {String(v)} ↗
                                 </a>
                               </div>
@@ -519,7 +519,7 @@ export default function DemoPage() {
             <div className="flex gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
               <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+              <span className="w-2.5 h-2.5 rounded-full bg-violet-500/60" />
             </div>
             <span className="text-[#8888a0] text-[10px] uppercase tracking-widest ml-2" style={mono}>
               EXECUTION LOG
@@ -528,10 +528,10 @@ export default function DemoPage() {
           {isRunning && (
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-500 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-500" />
               </span>
-              <span className="text-emerald-400 text-[10px]" style={mono}>EXECUTING</span>
+              <span className="text-violet-400 text-[10px]" style={mono}>EXECUTING</span>
             </div>
           )}
         </div>
@@ -543,7 +543,7 @@ export default function DemoPage() {
         >
           {logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <Image src="/logo.png" alt="AgentVerse" width={64} height={64} className="opacity-20 mb-4" />
+              <Image src="/logo.png" alt="PaygenticArena" width={64} height={64} className="opacity-20 mb-4" />
               <p className="text-[#555568] text-xs" style={mono}>
                 Select a scenario and click &quot;Run All Steps&quot;
                 <br />
@@ -552,7 +552,7 @@ export default function DemoPage() {
               <p className="text-[#555568] text-[10px] mt-4" style={mono}>
                 Each step makes real API calls with LLM reasoning
                 <br />
-                and WDK wallet operations.
+                and Locus operations.
               </p>
             </div>
           ) : (
@@ -560,13 +560,13 @@ export default function DemoPage() {
               {logs.map((log, i) => (
                 <div key={i} className="whitespace-pre-wrap">
                   {log.includes("✓") ? (
-                    <span className="text-emerald-400">{log}</span>
+                    <span className="text-violet-400">{log}</span>
                   ) : log.includes("✗") ? (
                     <span className="text-red-400">{log}</span>
                   ) : log.includes("▶") ? (
                     <span className="text-blue-400">{log}</span>
                   ) : log.includes("═") ? (
-                    <span className="text-emerald-400 font-bold">{log}</span>
+                    <span className="text-violet-400 font-bold">{log}</span>
                   ) : log.includes("POST") ? (
                     <span className="text-yellow-400">{log}</span>
                   ) : log === "" ? (
@@ -577,8 +577,8 @@ export default function DemoPage() {
                 </div>
               ))}
               <div className="flex items-center gap-1 mt-2">
-                <span className="text-emerald-400">▸</span>
-                <span className="w-1.5 h-3 bg-emerald-400 animate-pulse" />
+                <span className="text-violet-400">▸</span>
+                <span className="w-1.5 h-3 bg-violet-400 animate-pulse" />
               </div>
             </>
           )}

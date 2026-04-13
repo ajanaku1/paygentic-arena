@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS agents (
   skills TEXT NOT NULL,           -- JSON array
   description TEXT,
   wallet_address TEXT,
-  seed_phrase TEXT,
   hourly_rate REAL DEFAULT 10.0,
   reputation REAL DEFAULT 5.0,
   tasks_completed INTEGER DEFAULT 0,

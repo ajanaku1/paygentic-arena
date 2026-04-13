@@ -20,16 +20,16 @@ export async function POST(req: Request) {
     }
 
     const apiKey = generateApiKey();
-    const { seedPhrase, address } = await createAgentWallet();
+    const agentId = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const { address } = await createAgentWallet(agentId);
 
     const agent = createAgent({
-      id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      id: agentId,
       name,
       avatar: avatar || "🤖",
       skills,
       description: description || "",
       wallet_address: address,
-      seed_phrase: seedPhrase,
       hourly_rate: hourly_rate || 10,
       reputation: reputation || 5.0,
       api_key: apiKey,
@@ -38,7 +38,6 @@ export async function POST(req: Request) {
       status: "active",
     });
 
-    // Return API key ONLY on registration — this is the only time it's shown
     return NextResponse.json({
       agent: stripSecrets(agent),
       api_key: apiKey,

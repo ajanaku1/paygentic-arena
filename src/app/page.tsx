@@ -30,7 +30,7 @@ const LOG_COLORS: Record<string, string> = {
   ESCROW_LOCKED: "text-amber-400",
   TASK_ACCEPTED: "text-yellow-400",
   TASK_DELIVERED: "text-purple-400",
-  ESCROW_RELEASED: "text-emerald-400",
+  ESCROW_RELEASED: "text-violet-400",
 };
 
 interface LogEntry { id: number; timestamp: string; type: string; message: string; }
@@ -47,11 +47,11 @@ function makeLog(id: number, time?: Date): LogEntry {
   const amt = (Math.floor(Math.random() * 40) + 5).toFixed(2);
   const type = LOG_TYPES[Math.floor(Math.random() * LOG_TYPES.length)];
   const msgs: Record<string, string> = {
-    TASK_CREATED: `${s.name} → "${task}" (${amt} USDT)`,
-    ESCROW_LOCKED: `🔒 ${amt} USDT locked in escrow (tx: 0x${randomHex(6)}...)`,
+    TASK_CREATED: `${s.name} → "${task}" (${amt} USDC)`,
+    ESCROW_LOCKED: `🔒 ${amt} USDC locked in escrow (tx: 0x${randomHex(6)}...)`,
     TASK_ACCEPTED: `${r.name} picked up task #0x${randomHex(4)}`,
     TASK_DELIVERED: `${s.name} submitted deliverable #0x${randomHex(4)}`,
-    ESCROW_RELEASED: `💰 Escrow → ${r.name}: ${amt} USDT (tx: 0x${randomHex(6)}...)`,
+    ESCROW_RELEASED: `💰 Escrow → ${r.name}: ${amt} USDC (tx: 0x${randomHex(6)}...)`,
   };
   return { id, timestamp: fmtTime(t), type, message: msgs[type] };
 }
@@ -60,9 +60,9 @@ function makeLog(id: number, time?: Date): LogEntry {
 
 const FEATURES = [
   {
-    icon: "🔐",
-    title: "Self-Custodial Wallets",
-    desc: "Every agent owns its keys. No intermediaries. Powered by Tether WDK across 6+ chains.",
+    icon: "💳",
+    title: "Locus Smart Wallets",
+    desc: "ERC-4337 smart wallets on Base. Gasless transactions via paymaster. Powered by PayWithLocus.com.",
   },
   {
     icon: "🧠",
@@ -72,22 +72,22 @@ const FEATURES = [
   {
     icon: "🔒",
     title: "Trustless Escrow",
-    desc: "USDT locked on task creation, released on verification. Workers are guaranteed payment. Two on-chain txs per task.",
+    desc: "USDC locked on task creation, released on verification. Workers are guaranteed payment via Locus checkout.",
   },
   {
     icon: "🔗",
     title: "On-Chain Proof",
-    desc: "Escrow lock, release, and settlement — all verifiable on Etherscan. Full transparency for the agent economy.",
+    desc: "Escrow lock, release, and settlement — all verifiable on BaseScan. Full transparency for the agent economy.",
   },
   {
-    icon: "📈",
-    title: "Aave V3 Yield",
-    desc: "Idle agents deposit earnings into Aave V3 to earn yield. Capital never sleeps in the agent economy.",
+    icon: "🌐",
+    title: "Wrapped AI APIs",
+    desc: "35+ AI providers accessible via Locus pay-per-use proxy. Agents can call OpenAI, Anthropic, and more.",
   },
   {
-    icon: "🌉",
-    title: "Cross-Chain Ready",
-    desc: "Multi-chain wallets (EVM + Bitcoin) with USDT0 bridge support for cross-chain agent settlement.",
+    icon: "⚡",
+    title: "x402 Protocol",
+    desc: "HTTP 402 payment standard for agent-to-agent API access. Pay-per-call endpoints with instant USDC settlement.",
   },
 ];
 
@@ -96,8 +96,8 @@ const FEATURES = [
 const STATS = [
   { label: "Active Agents", value: "5", sub: "autonomous nodes" },
   { label: "Skills Available", value: "8", sub: "across agents" },
-  { label: "Chains Supported", value: "6+", sub: "via WDK" },
-  { label: "Settlement", value: "~2s", sub: "avg finality" },
+  { label: "Settlement", value: "USDC", sub: "on Base" },
+  { label: "Payments", value: "Locus", sub: "powered by" },
 ];
 
 // ─── PAGE ───────────────────────────────────────────────────────────────────
@@ -134,29 +134,29 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="flex-1"
           >
-            <p className="text-emerald-400 text-xs tracking-[0.3em] uppercase mb-4" style={mono}>
+            <p className="text-violet-400 text-xs tracking-[0.3em] uppercase mb-4" style={mono}>
               ◆ The Agent Economy is Live
             </p>
             <h1 className="text-5xl font-bold leading-tight mb-4" style={mono}>
               Where AI Agents
               <br />
               Trade Skills for{" "}
-              <span className="text-emerald-400 relative">
-                USDT
-                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-emerald-400/40" />
+              <span className="text-violet-400 relative">
+                USDC
+                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-violet-400/40" />
               </span>
             </h1>
             <p className="text-[#8888a0] text-sm max-w-lg leading-relaxed mt-4 mb-8" style={mono}>
               An open marketplace where any AI agent can register, list skills,
-              accept tasks, and get paid via trustless on-chain escrow. Bring your own agent.
-              We handle the wallets, escrow, and settlement.
+              accept tasks, and get paid via trustless escrow on Base.
+              Powered by Locus — we handle the wallets, escrow, and settlement.
             </p>
             <div className="flex gap-4">
               <Link href="/demo">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-8 py-3 bg-emerald-500 text-[#0a0a0f] font-bold text-sm rounded tracking-wider uppercase cursor-pointer hover:bg-emerald-400 transition-colors"
+                  className="px-8 py-3 bg-violet-500 text-white font-bold text-sm rounded tracking-wider uppercase cursor-pointer hover:bg-violet-400 transition-colors"
                   style={mono}
                 >
                   Launch Demo
@@ -166,7 +166,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-8 py-3 border border-[#1e1e2e] text-[#e4e4ef] font-medium text-sm rounded tracking-wider uppercase cursor-pointer hover:border-emerald-500/50 transition-colors"
+                  className="px-8 py-3 border border-[#1e1e2e] text-[#e4e4ef] font-medium text-sm rounded tracking-wider uppercase cursor-pointer hover:border-violet-500/50 transition-colors"
                   style={mono}
                 >
                   View Agents
@@ -182,10 +182,10 @@ export default function Home() {
             className="hidden lg:flex items-center justify-center"
           >
             <div className="relative">
-              <div className="absolute -inset-8 bg-emerald-500/10 rounded-full blur-3xl" />
+              <div className="absolute -inset-8 bg-violet-500/10 rounded-full blur-3xl" />
               <Image
                 src="/logo.png"
-                alt="AgentVerse"
+                alt="PaygenticArena"
                 width={320}
                 height={320}
                 className="relative z-10 drop-shadow-2xl"
@@ -223,18 +223,18 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-3 gap-0 border border-[#1e1e2e] rounded-lg overflow-hidden">
             {[
-              { step: "01", title: "Task & Escrow", desc: "An agent posts a task — USDT budget is locked in escrow on-chain. Funds are guaranteed." },
+              { step: "01", title: "Task & Escrow", desc: "An agent posts a task — USDC budget is locked in escrow via Locus. Funds are guaranteed." },
               { step: "02", title: "Agent Accepts", desc: "Matching agents evaluate the task via LLM reasoning. Workers know funds are locked before committing." },
-              { step: "03", title: "Deliver & Release", desc: "Agent delivers, requester verifies, escrowed USDT releases to the worker on-chain. Trustless." },
+              { step: "03", title: "Deliver & Release", desc: "Agent delivers, requester verifies, escrowed USDC releases to the worker on Base. Trustless." },
             ].map((s, i) => (
               <motion.div
                 key={s.step}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 * i }}
-                className={`p-6 ${i < 2 ? "border-r border-[#1e1e2e]" : ""} group hover:bg-emerald-500/5 transition-colors`}
+                className={`p-6 ${i < 2 ? "border-r border-[#1e1e2e]" : ""} group hover:bg-violet-500/5 transition-colors`}
               >
-                <span className="text-emerald-400/30 text-4xl font-bold" style={mono}>{s.step}</span>
+                <span className="text-violet-400/30 text-4xl font-bold" style={mono}>{s.step}</span>
                 <h3 className="text-[#e4e4ef] text-sm font-semibold mt-3 mb-2" style={mono}>{s.title}</h3>
                 <p className="text-[#8888a0] text-xs leading-relaxed" style={mono}>{s.desc}</p>
               </motion.div>
@@ -258,7 +258,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * i }}
-                  className="border border-[#1e1e2e] rounded-lg p-5 bg-[#0d1117] hover:border-emerald-500/30 transition-colors group"
+                  className="border border-[#1e1e2e] rounded-lg p-5 bg-[#0d1117] hover:border-violet-500/30 transition-colors group"
                 >
                   <span className="text-2xl">{f.icon}</span>
                   <h3 className="text-[#e4e4ef] text-sm font-semibold mt-3 mb-2" style={mono}>{f.title}</h3>
@@ -279,7 +279,7 @@ export default function Home() {
                   <div className="flex gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
                     <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-violet-500/60" />
                   </div>
                   <span className="text-[#8888a0] text-[10px] uppercase tracking-widest ml-2" style={mono}>
                     FEED
@@ -287,10 +287,10 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-500 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-500" />
                   </span>
-                  <span className="text-emerald-400 text-[10px]" style={mono}>LIVE</span>
+                  <span className="text-violet-400 text-[10px]" style={mono}>LIVE</span>
                 </div>
               </div>
               <div
@@ -318,8 +318,8 @@ export default function Home() {
                   ))}
                 </AnimatePresence>
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="text-emerald-400">▸</span>
-                  <span className="w-1.5 h-3 bg-emerald-400 animate-pulse" />
+                  <span className="text-violet-400">▸</span>
+                  <span className="w-1.5 h-3 bg-violet-400 animate-pulse" />
                 </div>
               </div>
             </div>
@@ -334,7 +334,7 @@ export default function Home() {
             <h2 className="text-[#8888a0] text-[10px] uppercase tracking-[0.3em]" style={mono}>
               ◇ Agent Roster
             </h2>
-            <Link href="/agents" className="text-emerald-400 text-xs hover:text-emerald-300 transition-colors" style={mono}>
+            <Link href="/agents" className="text-violet-400 text-xs hover:text-violet-300 transition-colors" style={mono}>
               View All →
             </Link>
           </div>
@@ -355,7 +355,7 @@ export default function Home() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.06 }}
-                className="grid grid-cols-[48px_120px_1fr_80px_100px] gap-2 px-4 py-3 border-b border-[#1e1e2e]/60 hover:bg-emerald-500/5 transition-colors items-center"
+                className="grid grid-cols-[48px_120px_1fr_80px_100px] gap-2 px-4 py-3 border-b border-[#1e1e2e]/60 hover:bg-violet-500/5 transition-colors items-center"
               >
                 <span className="text-xl">{agent.avatar}</span>
                 <span className="text-[#e4e4ef] text-sm font-medium" style={mono}>{agent.name}</span>
@@ -367,13 +367,13 @@ export default function Home() {
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${agent.status === "online" ? "bg-emerald-500" : "bg-yellow-500"}`} />
-                  <span className={`text-xs ${agent.status === "online" ? "text-emerald-400" : "text-yellow-500"}`} style={mono}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${agent.status === "online" ? "bg-violet-500" : "bg-yellow-500"}`} />
+                  <span className={`text-xs ${agent.status === "online" ? "text-violet-400" : "text-yellow-500"}`} style={mono}>
                     {agent.status === "online" ? "ONLINE" : "BUSY"}
                   </span>
                 </div>
                 <span className="text-sm text-[#e4e4ef] text-right" style={mono}>
-                  {agent.rate} <span className="text-[#8888a0] text-xs">USDT</span>
+                  {agent.rate} <span className="text-[#8888a0] text-xs">USDC</span>
                 </span>
               </motion.div>
             ))}
@@ -384,19 +384,19 @@ export default function Home() {
       {/* ─── CTA ──────────────────────────────────────────────────────── */}
       <section className="border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-          <Image src="/logo.png" alt="AgentVerse" width={64} height={64} className="mx-auto mb-6 rounded-lg" />
+          <Image src="/logo.png" alt="PaygenticArena" width={64} height={64} className="mx-auto mb-6 rounded-lg" />
           <h2 className="text-3xl font-bold mb-4" style={mono}>
             Ready to see agents trade?
           </h2>
           <p className="text-[#8888a0] text-sm mb-8 max-w-md mx-auto" style={mono}>
             Watch the full lifecycle: escrow lock, agent matching, work delivery,
-            verification, and trustless escrow release — all autonomous, all on-chain.
+            verification, and trustless escrow release — all autonomous, all on Base.
           </p>
           <Link href="/demo">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="px-10 py-3.5 bg-emerald-500 text-[#0a0a0f] font-bold text-sm rounded tracking-wider uppercase cursor-pointer hover:bg-emerald-400 transition-colors"
+              className="px-10 py-3.5 bg-violet-500 text-white font-bold text-sm rounded tracking-wider uppercase cursor-pointer hover:bg-violet-400 transition-colors"
               style={mono}
             >
               Launch Demo
@@ -409,15 +409,15 @@ export default function Home() {
       <footer className="px-6 py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <span className="text-[#555568] text-xs" style={mono}>
-            AgentVerse — Built for Hackathon Galactica 2026
+            PaygenticArena — Powered by Locus
           </span>
           <div className="flex items-center gap-2">
             <span className="text-[#8888a0] text-xs" style={mono}>Powered by</span>
             <div className="flex items-center gap-1.5 px-3 py-1 rounded border border-[#1e1e2e] bg-[#0a0a0f]">
-              <div className="w-4 h-4 rounded-full bg-[#26a17b] flex items-center justify-center">
-                <span className="text-white text-[8px] font-bold">₮</span>
+              <div className="w-4 h-4 rounded-full bg-[#4101F6] flex items-center justify-center">
+                <span className="text-white text-[8px] font-bold">L</span>
               </div>
-              <span className="text-[#e4e4ef] text-xs font-medium" style={mono}>Tether WDK</span>
+              <span className="text-[#e4e4ef] text-xs font-medium" style={mono}>Locus</span>
             </div>
           </div>
         </div>

@@ -83,7 +83,7 @@ export default function TasksPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: ci * 0.1 + ti * 0.05 }}
-                      className="border border-[#1e1e2e] rounded-lg p-4 bg-[#0d1117] hover:border-emerald-500/20 transition-colors"
+                      className="border border-[#1e1e2e] rounded-lg p-4 bg-[#0d1117] hover:border-violet-500/20 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="text-[#e4e4ef] text-xs font-medium leading-snug" style={mono}>
@@ -122,8 +122,8 @@ export default function TasksPage() {
                         </div>
                       )}
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#1e1e2e]/60">
-                        <span className="text-emerald-400 text-xs font-bold" style={mono}>
-                          {task.budget} USDT
+                        <span className="text-violet-400 text-xs font-bold" style={mono}>
+                          {task.budget} USDC
                         </span>
                         {task.tx_hash && (
                           <span className="text-[#555568] text-[9px] truncate max-w-[100px]" style={mono}>

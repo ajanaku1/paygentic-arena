@@ -34,29 +34,26 @@ export async function createTask(
     budget,
   });
 
-  // ── Lock budget into escrow ──────────────────────────────────────────────
+  // ── Lock budget into escrow via Locus ───────────────────────────────────
   let escrowTxHash: string | null = null;
   let escrowStatus: string = "none";
-  let escrowError: string | null = null;
 
   try {
     const result = await wallet.lockEscrow(
-      requester.seed_phrase,
-      "100000000000000" // 0.0001 ETH as budget proxy
+      budget.toFixed(2),
+      title,
+      task.id
     );
-    escrowTxHash = result.hash;
+    escrowTxHash = result.txHash;
     escrowStatus = "locked";
   } catch (e: any) {
-    escrowError = e.message || String(e);
-    console.error("[createTask] Escrow lock failed:", escrowError);
-    // Simulated escrow for demo
-    escrowTxHash = `0xESCROW_${Array.from({ length: 54 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+    console.error("[createTask] Escrow lock failed:", e.message);
+    escrowTxHash = `locus_sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     escrowStatus = "locked";
   }
 
-  const isSimulated = escrowTxHash?.startsWith("0xESCROW_") ?? false;
+  const isSimulated = escrowTxHash?.startsWith("locus_sim_") ?? false;
 
-  // Update task with escrow info
   const updated = db.updateTaskStatus(task.id, "open", {
     escrow_tx_hash: escrowTxHash || undefined,
     escrow_status: escrowStatus,
@@ -66,7 +63,7 @@ export async function createTask(
     "escrow_locked",
     requesterId,
     task.id,
-    `${requester.name} locked ${budget} USDT in escrow for "${title}"${isSimulated ? " (simulated)" : ""}`,
+    `${requester.name} locked ${budget} USDC in escrow for "${title}"${isSimulated ? " (simulated)" : ""}`,
     { escrowTxHash, amount: budget, simulated: isSimulated }
   );
 
@@ -85,7 +82,7 @@ export async function createTask(
           status: escrowStatus,
           txHash: escrowTxHash,
           simulated: isSimulated,
-          explorerUrl: isSimulated ? null : `https://sepolia.etherscan.io/tx/${escrowTxHash}`,
+          explorerUrl: isSimulated ? null : `https://basescan.org/tx/${escrowTxHash}`,
         },
       },
       timestamp: new Date().toISOString(),
@@ -108,13 +105,11 @@ export async function findAndAssignAgent(
     throw new Error(`No agents found with skill: ${task.skill_required}`);
   }
 
-  // Filter out the requester
   const eligible = candidates.filter((a) => a.id !== task.requester_id);
   if (eligible.length === 0) {
     throw new Error("No eligible agents (requester cannot self-assign)");
   }
 
-  // Ask the best matching agent to evaluate the task
   const agent = eligible[0];
   const evaluation = await engine.evaluateTask(agent, task);
 
@@ -127,7 +122,7 @@ export async function findAndAssignAgent(
       "task_assigned",
       agent.id,
       taskId,
-      `${agent.name} accepted: "${task.title}" for ${task.budget} USDT`,
+      `${agent.name} accepted: "${task.title}" for ${task.budget} USDC`,
       { reason: evaluation.reason }
     );
 
@@ -148,7 +143,6 @@ export async function findAndAssignAgent(
     };
   }
 
-  // If first agent rejects, try next
   for (const fallback of eligible.slice(1)) {
     const eval2 = await engine.evaluateTask(fallback, task);
     if (eval2.accept) {
@@ -159,7 +153,7 @@ export async function findAndAssignAgent(
         "task_assigned",
         fallback.id,
         taskId,
-        `${fallback.name} accepted: "${task.title}" for ${task.budget} USDT`,
+        `${fallback.name} accepted: "${task.title}" for ${task.budget} USDC`,
         { reason: eval2.reason }
       );
       return {
@@ -265,8 +259,6 @@ export async function verifyWork(
   const requester = db.getAgent(task.requester_id)!;
   const verification = await engine.verifyDeliverable(requester, task, task.result);
 
-  // Always approve in demo mode — agents should settle, even with feedback
-  // In production, a rejection would loop back for revisions
   const updated = db.updateTaskStatus(taskId, "verified");
   db.logActivity(
     "task_verified",
@@ -292,7 +284,7 @@ export async function verifyWork(
   };
 }
 
-// ─── SETTLE PAYMENT VIA WDK ────────────────────────────────────────────────
+// ─── SETTLE PAYMENT VIA LOCUS ──────────────────────────────────────────────
 
 export async function settlePayment(
   taskId: string
@@ -306,21 +298,19 @@ export async function settlePayment(
   let txHash: string;
   let settlementError: string | null = null;
   try {
-    // Release escrowed funds to the worker — escrow wallet → provider
     const result = await wallet.releaseEscrow(
       provider.wallet_address,
-      "100000000000000" // 0.0001 ETH
+      task.budget.toFixed(2),
+      task.id
     );
-    txHash = result.hash;
+    txHash = result.txHash;
   } catch (e: any) {
     settlementError = e.message || String(e);
     console.error("[settlePayment] Escrow release failed:", settlementError);
-    // Fallback: simulated tx hash
-    txHash = `0xSIM_${Array.from({ length: 58 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+    txHash = `locus_sim_release_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  const isSimulated = txHash.startsWith("0xSIM_");
-  const txLabel = isSimulated ? "(simulated - testnet)" : "";
+  const isSimulated = txHash.startsWith("locus_sim_");
 
   const updated = db.updateTaskStatus(taskId, "paid", {
     tx_hash: txHash,
@@ -332,7 +322,7 @@ export async function settlePayment(
     "escrow_released",
     null,
     taskId,
-    `Escrow released: ${task.budget} USDT → ${provider.name} ${txLabel}`.trim(),
+    `Escrow released: ${task.budget} USDC → ${provider.name}${isSimulated ? " (simulated)" : ""}`,
     { txHash, amount: task.budget, escrowTxHash: task.escrow_tx_hash, simulated: isSimulated }
   );
 
@@ -340,7 +330,7 @@ export async function settlePayment(
     "payment_sent",
     requester.id,
     taskId,
-    `${requester.name} → ${provider.name}: ${task.budget} USDT via escrow ${txLabel} (tx: ${txHash.slice(0, 14)}...)`.trim(),
+    `${requester.name} → ${provider.name}: ${task.budget} USDC via Locus${isSimulated ? " (simulated)" : ""}`,
     { txHash, amount: task.budget, from: "escrow", to: provider.wallet_address, simulated: isSimulated }
   );
 
@@ -348,7 +338,7 @@ export async function settlePayment(
     "payment_received",
     provider.id,
     taskId,
-    `${provider.name} received ${task.budget} USDT from escrow ${txLabel}`.trim(),
+    `${provider.name} received ${task.budget} USDC from escrow${isSimulated ? " (simulated)" : ""}`,
     { txHash, amount: task.budget, simulated: isSimulated }
   );
 
@@ -364,12 +354,14 @@ export async function settlePayment(
         to: provider.name,
         toAddress: provider.wallet_address,
         amount: task.budget,
-        mechanism: "escrow_release",
+        currency: "USDC",
+        chain: "Base",
+        mechanism: "locus_escrow_release",
         escrowTxHash: task.escrow_tx_hash,
         releaseTxHash: txHash,
         simulated: isSimulated,
         settlementError: settlementError || undefined,
-        explorerUrl: isSimulated ? null : `https://sepolia.etherscan.io/tx/${txHash}`,
+        explorerUrl: isSimulated ? null : `https://basescan.org/tx/${txHash}`,
       },
       timestamp: new Date().toISOString(),
     },
@@ -387,27 +379,21 @@ export async function runFullDemo(
 ): Promise<StepResult[]> {
   const steps: StepResult[] = [];
 
-  // 1. Create task
   const { task, step: s1 } = await createTask(requesterId, title, description, skillRequired, budget);
   steps.push(s1);
 
-  // 2. Find and assign agent
   const { step: s2 } = await findAndAssignAgent(task.id);
   steps.push(s2);
 
-  // 3. Start work
   const { step: s3 } = await startWork(task.id);
   steps.push(s3);
 
-  // 4. Deliver work
   const { step: s4 } = await deliverWork(task.id);
   steps.push(s4);
 
-  // 5. Verify work
   const { step: s5 } = await verifyWork(task.id);
   steps.push(s5);
 
-  // 6. Settle payment
   const { step: s6 } = await settlePayment(task.id);
   steps.push(s6);
 

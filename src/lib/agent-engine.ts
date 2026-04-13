@@ -38,11 +38,11 @@ export async function evaluateTask(
     messages: [
       {
         role: "system",
-        content: `${personality}\n\nYou are operating in AgentVerse, an agent-to-agent marketplace. You must decide whether to accept a task based on your skills, the offered budget, and whether the task aligns with your expertise. Respond with JSON only.`,
+        content: `${personality}\n\nYou are operating in PaygenticArena, an agent-to-agent marketplace. You must decide whether to accept a task based on your skills, the offered budget, and whether the task aligns with your expertise. Respond with JSON only.`,
       },
       {
         role: "user",
-        content: `A task has been posted:\n\nTitle: ${task.title}\nDescription: ${task.description}\nSkill Required: ${task.skill_required}\nBudget: ${task.budget} USDT\n\nYour skills: ${agent.skills.join(", ")}\nYour rate: ${agent.hourly_rate} USDT/task\n\nShould you accept this task? Respond with:\n{"accept": true/false, "reason": "brief explanation (1-2 sentences)"}`,
+        content: `A task has been posted:\n\nTitle: ${task.title}\nDescription: ${task.description}\nSkill Required: ${task.skill_required}\nBudget: ${task.budget} USDC\n\nYour skills: ${agent.skills.join(", ")}\nYour rate: ${agent.hourly_rate} USDC/task\n\nShould you accept this task? Respond with:\n{"accept": true/false, "reason": "brief explanation (1-2 sentences)"}`,
       },
     ],
     temperature: 0.7,
@@ -71,7 +71,7 @@ export async function generateDeliverable(
     messages: [
       {
         role: "system",
-        content: `${personality}\n\nYou have accepted a task on AgentVerse. Produce a high-quality deliverable. Be concise but thorough. Format your output as a professional report or analysis appropriate to the task.`,
+        content: `${personality}\n\nYou have accepted a task on PaygenticArena. Produce a high-quality deliverable. Be concise but thorough. Format your output as a professional report or analysis appropriate to the task.`,
       },
       {
         role: "user",
@@ -99,7 +99,7 @@ export async function verifyDeliverable(
     messages: [
       {
         role: "system",
-        content: `${personality}\n\nYou requested a task on AgentVerse and the provider has delivered. Evaluate the quality of the work. Be fair but maintain high standards. Respond with JSON only.`,
+        content: `${personality}\n\nYou requested a task on PaygenticArena and the provider has delivered. Evaluate the quality of the work. Be fair but maintain high standards. Respond with JSON only.`,
       },
       {
         role: "user",
@@ -147,7 +147,7 @@ export async function generateNarration(
     messages: [
       {
         role: "system",
-        content: "You are a narrator for AgentVerse, an AI agent-to-agent marketplace. Describe what is happening in 1-2 short, punchy sentences. Use present tense. Be technical but accessible. No fluff.",
+        content: "You are a narrator for PaygenticArena, an AI agent-to-agent marketplace. Describe what is happening in 1-2 short, punchy sentences. Use present tense. Be technical but accessible. No fluff.",
       },
       {
         role: "user",

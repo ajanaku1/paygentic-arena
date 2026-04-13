@@ -1,5 +1,5 @@
 {
-  "name": "agentverse",
+  "name": "paygentic-arena",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -11,10 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tetherto/wdk": "^1.0.0-beta.6",
-    "@tetherto/wdk-protocol-lending-aave-evm": "^1.0.0-beta.3",
-    "@tetherto/wdk-wallet-btc": "^1.0.0-beta.6",
-    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.10",
+    "@withlocus/checkout-react": "^1.2.0",
     "better-sqlite3": "^11.0.0",
     "framer-motion": "^12.0.0",
     "next": "^15.0.0",
@@ -22,8 +19,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sql.js": "^1.14.1",
-    "uuid": "^10.0.0",
-    "ws": "^8.19.0"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

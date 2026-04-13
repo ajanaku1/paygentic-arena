@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import type { Agent, Task, ActivityLog, ActivityType } from "./types";
 
-const SOURCE_DB = path.join(process.cwd(), "db", "agentverse.db");
+const SOURCE_DB = path.join(process.cwd(), "db", "paygentic-arena.db");
 const SCHEMA_PATH = path.join(process.cwd(), "db", "schema.sql");
 
 // ─── DB ADAPTER INTERFACE ───────────────────────────────────────────────────
@@ -116,13 +116,13 @@ export function getAgent(id: string): Agent | null {
 export function createAgent(agent: Omit<Agent, "tasks_completed" | "created_at">): Agent {
   const db = getDb();
   db.run(
-    `INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation, api_key, endpoint_url, framework, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agents (id, name, avatar, skills, description, wallet_address, hourly_rate, reputation, api_key, endpoint_url, framework, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     agent.id, agent.name, agent.avatar, JSON.stringify(agent.skills), agent.description,
-    agent.wallet_address, agent.seed_phrase, agent.hourly_rate, agent.reputation,
+    agent.wallet_address, agent.hourly_rate, agent.reputation,
     agent.api_key || null, agent.endpoint_url || null, agent.framework || "custom", agent.status || "active"
   );
-  logActivity("agent_registered", agent.id, null, `${agent.name} joined AgentVerse`, { framework: agent.framework });
+  logActivity("agent_registered", agent.id, null, `${agent.name} joined PaygenticArena`, { framework: agent.framework });
   return getAgent(agent.id)!;
 }
 
@@ -160,7 +160,7 @@ export function createTask(task: Pick<Task, "id" | "title" | "description" | "re
     `INSERT INTO tasks (id, title, description, requester_id, skill_required, budget) VALUES (?, ?, ?, ?, ?, ?)`,
     task.id, task.title, task.description, task.requester_id, task.skill_required, task.budget
   );
-  logActivity("task_created", task.requester_id, task.id, `New task: "${task.title}" (${task.budget} USDT)`);
+  logActivity("task_created", task.requester_id, task.id, `New task: "${task.title}" (${task.budget} USDC)`);
   return getTask(task.id)!;
 }
 

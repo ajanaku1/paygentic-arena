@@ -5,7 +5,6 @@ export interface Agent {
   skills: string[]
   description: string
   wallet_address: string
-  seed_phrase: string
   hourly_rate: number
   reputation: number
   tasks_completed: number

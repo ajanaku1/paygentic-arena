@@ -1,18 +1,17 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
-import WDK from "@tetherto/wdk";
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import WalletManagerBtc from "@tetherto/wdk-wallet-btc";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "..", "db", "agentverse.db");
+const DB_PATH = path.join(__dirname, "..", "db", "paygentic-arena.db");
 const SCHEMA_PATH = path.join(__dirname, "..", "db", "schema.sql");
-const RPC_URL = process.env.RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
 
-// Fixed seed for Atlas so the address is stable and can be funded from a faucet
-const ATLAS_SEED = "flower alert bracket erosion lizard width craft permit vault twelve witness animal";
+function generateAddress(agentId) {
+  const hash = crypto.createHash("sha256").update(`paygentic-arena-${agentId}`).digest("hex");
+  return `0x${hash.slice(0, 40)}`;
+}
 
 const AGENTS = [
   {
@@ -23,7 +22,6 @@ const AGENTS = [
     description: "Meticulous market researcher and data analyst. Approaches tasks methodically, always backing claims with data.",
     hourly_rate: 5,
     reputation: 4.9,
-    fixedSeed: ATLAS_SEED,
   },
   {
     id: "nova",
@@ -64,24 +62,22 @@ const AGENTS = [
 ];
 
 async function seed() {
-  console.log("=== Seeding AgentVerse ===\n");
+  console.log("=== Seeding PaygenticArena ===\n");
 
-  // Init DB
   const db = new Database(DB_PATH);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
 
-  // Clear existing data
   db.exec("DELETE FROM activity_log");
   db.exec("DELETE FROM tasks");
   db.exec("DELETE FROM agents");
   console.log("✓ Cleared existing data\n");
 
   const insertAgent = db.prepare(`
-    INSERT INTO agents (id, name, avatar, skills, description, wallet_address, seed_phrase, hourly_rate, reputation, framework, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO agents (id, name, avatar, skills, description, wallet_address, hourly_rate, reputation, framework, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertActivity = db.prepare(`
@@ -90,27 +86,7 @@ async function seed() {
   `);
 
   for (const agent of AGENTS) {
-    // Generate WDK wallets (EVM + BTC) — use fixed seed if provided
-    const seed = agent.fixedSeed || WDK.getRandomSeedPhrase();
-
-    const evmWdk = new WDK(seed).registerWallet("ethereum", WalletManagerEvm, {
-      provider: RPC_URL,
-    });
-    const evmAccount = await evmWdk.getAccount("ethereum", 0);
-    const address = await evmAccount.getAddress();
-    evmWdk.dispose();
-
-    let btcAddress = "N/A";
-    try {
-      const btcWdk = new WDK(seed).registerWallet("bitcoin", WalletManagerBtc, {
-        provider: "https://blockstream.info/api",
-      });
-      const btcAccount = await btcWdk.getAccount("bitcoin", 0);
-      btcAddress = await btcAccount.getAddress();
-      btcWdk.dispose();
-    } catch (e) {
-      console.log("  BTC wallet skipped:", e.message?.slice(0, 50));
-    }
+    const address = generateAddress(agent.id);
 
     insertAgent.run(
       agent.id,
@@ -119,7 +95,6 @@ async function seed() {
       JSON.stringify(agent.skills),
       agent.description,
       address,
-      seed,
       agent.hourly_rate,
       agent.reputation,
       "builtin",
@@ -129,20 +104,19 @@ async function seed() {
     insertActivity.run(
       "agent_registered",
       agent.id,
-      `${agent.name} joined AgentVerse with wallet ${address.slice(0, 8)}...`
+      `${agent.name} joined PaygenticArena with wallet ${address.slice(0, 8)}...`
     );
 
     console.log(`✓ ${agent.avatar} ${agent.name}`);
-    console.log(`  EVM Wallet: ${address}`);
-    console.log(`  BTC Wallet: ${btcAddress}`);
+    console.log(`  Base Wallet: ${address}`);
     console.log(`  Skills: ${agent.skills.join(", ")}`);
-    console.log(`  Rate:   ${agent.hourly_rate} USDT/task\n`);
+    console.log(`  Rate:   ${agent.hourly_rate} USDC/task\n`);
   }
 
-  // Verify
   const count = db.prepare("SELECT COUNT(*) as c FROM agents").get();
   const actCount = db.prepare("SELECT COUNT(*) as c FROM activity_log").get();
   console.log(`=== Done: ${count.c} agents seeded, ${actCount.c} activity entries ===`);
+  console.log(`\nPayments powered by Locus (PayWithLocus.com) on Base`);
 
   db.close();
 }

@@ -3,7 +3,6 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 
-// Use a test-specific DB
 const TEST_DB = path.join(process.cwd(), "db", "test.db");
 const SCHEMA_PATH = path.join(process.cwd(), "db", "schema.sql");
 
@@ -40,8 +39,8 @@ describe("Database Schema", () => {
 
   it("inserts and retrieves an agent", () => {
     db.prepare(
-      "INSERT INTO agents (id, name, avatar, skills, wallet_address, seed_phrase, hourly_rate, reputation) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run("test-1", "TestBot", "🤖", '["Testing"]', "0x123", "test seed phrase", 10, 5.0);
+      "INSERT INTO agents (id, name, avatar, skills, wallet_address, hourly_rate, reputation) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).run("test-1", "TestBot", "🤖", '["Testing"]', "0x123", 10, 5.0);
 
     const agent = db.prepare("SELECT * FROM agents WHERE id = ?").get("test-1") as any;
     expect(agent.name).toBe("TestBot");
@@ -54,8 +53,8 @@ describe("Database Schema", () => {
 
   it("inserts and retrieves a task", () => {
     db.prepare(
-      "INSERT INTO agents (id, name, avatar, skills, wallet_address, seed_phrase) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run("agent-1", "Agent", "🤖", "[]", "0x1", "seed");
+      "INSERT INTO agents (id, name, avatar, skills, wallet_address) VALUES (?, ?, ?, ?, ?)"
+    ).run("agent-1", "Agent", "🤖", "[]", "0x1");
 
     db.prepare(
       "INSERT INTO tasks (id, title, description, requester_id, skill_required, budget) VALUES (?, ?, ?, ?, ?, ?)"
@@ -69,7 +68,7 @@ describe("Database Schema", () => {
   });
 
   it("updates task status", () => {
-    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address, seed_phrase) VALUES (?, ?, ?, ?, ?, ?)").run("a1", "A", "🤖", "[]", "0x1", "s");
+    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address) VALUES (?, ?, ?, ?, ?)").run("a1", "A", "🤖", "[]", "0x1");
     db.prepare("INSERT INTO tasks (id, title, requester_id, skill_required, budget) VALUES (?, ?, ?, ?, ?)").run("t1", "Task", "a1", "Skill", 10);
 
     db.prepare("UPDATE tasks SET status = ? WHERE id = ?").run("in_progress", "t1");
@@ -87,7 +86,7 @@ describe("Database Schema", () => {
   });
 
   it("enforces task status defaults to open", () => {
-    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address, seed_phrase) VALUES (?, ?, ?, ?, ?, ?)").run("a2", "B", "🤖", "[]", "0x2", "s2");
+    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address) VALUES (?, ?, ?, ?, ?)").run("a2", "B", "🤖", "[]", "0x2");
     db.prepare("INSERT INTO tasks (id, title, requester_id, skill_required, budget) VALUES (?, ?, ?, ?, ?)").run("t2", "Task2", "a2", "Skill", 5);
 
     const task = db.prepare("SELECT status FROM tasks WHERE id = ?").get("t2") as any;
@@ -105,7 +104,7 @@ describe("Database Schema", () => {
   });
 
   it("tracks tasks_completed counter", () => {
-    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address, seed_phrase, tasks_completed) VALUES (?, ?, ?, ?, ?, ?, ?)").run("a3", "C", "🤖", "[]", "0x3", "s3", 0);
+    db.prepare("INSERT INTO agents (id, name, avatar, skills, wallet_address, tasks_completed) VALUES (?, ?, ?, ?, ?, ?)").run("a3", "C", "🤖", "[]", "0x3", 0);
 
     db.prepare("UPDATE agents SET tasks_completed = tasks_completed + 1 WHERE id = ?").run("a3");
     db.prepare("UPDATE agents SET tasks_completed = tasks_completed + 1 WHERE id = ?").run("a3");
