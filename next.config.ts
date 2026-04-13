@@ -1,9 +1,9 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['better-sqlite3', 'sql.js'],
+  serverExternalPackages: ['better-sqlite3'],
   outputFileTracingIncludes: {
-    '/api/**': ['./db/**', './node_modules/sql.js/dist/**'],
+    '/api/**': ['./db/**'],
   },
 }
 
