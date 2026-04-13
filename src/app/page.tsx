@@ -1,62 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
 const mono = { fontFamily: '"JetBrains Mono", "Fira Code", monospace' };
 
-// ─── MOCK DATA ──────────────────────────────────────────────────────────────
-
-const AGENTS = [
-  { name: "Atlas", avatar: "🌐", skills: ["Market Research", "Data Analysis"], status: "online" as const, rate: 5 },
-  { name: "Nova", avatar: "⚡", skills: ["Code Review", "Bug Hunting"], status: "busy" as const, rate: 15 },
-  { name: "Sage", avatar: "📝", skills: ["Content Writing", "SEO"], status: "online" as const, rate: 8 },
-  { name: "Cipher", avatar: "🔐", skills: ["Smart Contract Audit"], status: "online" as const, rate: 45 },
-  { name: "Pixel", avatar: "🎨", skills: ["UI/UX Design"], status: "busy" as const, rate: 12 },
-];
-
-const TASKS = [
-  "Review Solidity contract", "Analyze DEX volume trends", "Write tokenomics docs",
-  "Audit bridge contract", "Design dashboard mockup", "Research competitor tokens",
-  "Fix reentrancy vulnerability", "Optimize gas usage", "Create landing page copy",
-  "Review ERC-4337 implementation", "Analyze on-chain whale activity",
-];
-
-const LOG_TYPES = ["TASK_CREATED", "ESCROW_LOCKED", "TASK_ACCEPTED", "TASK_DELIVERED", "ESCROW_RELEASED"] as const;
 const LOG_COLORS: Record<string, string> = {
-  TASK_CREATED: "text-blue-400",
-  ESCROW_LOCKED: "text-amber-400",
-  TASK_ACCEPTED: "text-yellow-400",
-  TASK_DELIVERED: "text-purple-400",
-  ESCROW_RELEASED: "text-violet-400",
+  task_created: "text-blue-400",
+  escrow_locked: "text-amber-400",
+  task_assigned: "text-yellow-400",
+  task_delivered: "text-purple-400",
+  task_verified: "text-cyan-400",
+  payment_sent: "text-violet-400",
+  payment_received: "text-violet-400",
+  escrow_released: "text-violet-400",
+  agent_registered: "text-green-400",
 };
-
-interface LogEntry { id: number; timestamp: string; type: string; message: string; }
-
-function randomHex(n: number) { return Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join(""); }
-function fmtTime(d: Date) { return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
-
-function makeLog(id: number, time?: Date): LogEntry {
-  const t = time || new Date();
-  const s = AGENTS[Math.floor(Math.random() * AGENTS.length)];
-  let r = AGENTS[Math.floor(Math.random() * AGENTS.length)];
-  while (r.name === s.name) r = AGENTS[Math.floor(Math.random() * AGENTS.length)];
-  const task = TASKS[Math.floor(Math.random() * TASKS.length)];
-  const amt = (Math.floor(Math.random() * 40) + 5).toFixed(2);
-  const type = LOG_TYPES[Math.floor(Math.random() * LOG_TYPES.length)];
-  const msgs: Record<string, string> = {
-    TASK_CREATED: `${s.name} → "${task}" (${amt} USDC)`,
-    ESCROW_LOCKED: `🔒 ${amt} USDC locked in escrow (tx: 0x${randomHex(6)}...)`,
-    TASK_ACCEPTED: `${r.name} picked up task #0x${randomHex(4)}`,
-    TASK_DELIVERED: `${s.name} submitted deliverable #0x${randomHex(4)}`,
-    ESCROW_RELEASED: `💰 Escrow → ${r.name}: ${amt} USDC (tx: 0x${randomHex(6)}...)`,
-  };
-  return { id, timestamp: fmtTime(t), type, message: msgs[type] };
-}
-
-// ─── FEATURES ───────────────────────────────────────────────────────────────
 
 const FEATURES = [
   {
@@ -76,8 +37,8 @@ const FEATURES = [
   },
   {
     icon: "🔗",
-    title: "On-Chain Proof",
-    desc: "Escrow lock, release, and settlement — all verifiable on BaseScan. Full transparency for the agent economy.",
+    title: "On-Chain Settlement",
+    desc: "Escrow lock, release, and settlement, all verifiable on BaseScan. Full transparency for the agent economy.",
   },
   {
     icon: "🌐",
@@ -91,41 +52,65 @@ const FEATURES = [
   },
 ];
 
-// ─── STATS ──────────────────────────────────────────────────────────────────
+interface AgentData {
+  id: string;
+  name: string;
+  avatar: string;
+  skills: string[];
+  hourly_rate: number;
+  reputation: number;
+  tasks_completed: number;
+  status: string;
+}
 
-const STATS = [
-  { label: "Active Agents", value: "5", sub: "autonomous nodes" },
-  { label: "Skills Available", value: "8", sub: "across agents" },
-  { label: "Settlement", value: "USDC", sub: "on Base" },
-  { label: "Payments", value: "Locus", sub: "powered by" },
-];
+interface ActivityData {
+  id: number;
+  type: string;
+  message: string;
+  created_at: string;
+}
 
-// ─── PAGE ───────────────────────────────────────────────────────────────────
+interface StatsData {
+  agentCount: number;
+  taskCount: number;
+  completedCount: number;
+  volume: number;
+  escrowLocked: number;
+  escrowReleased: number;
+}
 
 export default function Home() {
-  const [logs, setLogs] = useState<LogEntry[]>(() => {
-    const base = new Date();
-    return Array.from({ length: 8 }, (_, i) => makeLog(i, new Date(base.getTime() - (8 - i) * 3000)));
-  });
+  const [agents, setAgents] = useState<AgentData[]>([]);
+  const [activity, setActivity] = useState<ActivityData[]>([]);
+  const [stats, setStats] = useState<StatsData | null>(null);
   const termRef = useRef<HTMLDivElement>(null);
-  const counter = useRef(8);
 
-  const addLog = useCallback(() => {
-    setLogs((prev) => [...prev.slice(-40), makeLog(counter.current++)]);
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/agents").then((r) => r.json()).catch(() => []),
+      fetch("/api/activity?limit=30").then((r) => r.json()).catch(() => []),
+      fetch("/api/stats").then((r) => r.json()).catch(() => null),
+    ]).then(([a, act, s]) => {
+      setAgents(a);
+      setActivity(act);
+      setStats(s);
+    });
   }, []);
 
   useEffect(() => {
-    const iv = setInterval(addLog, 2500);
-    return () => clearInterval(iv);
-  }, [addLog]);
-
-  useEffect(() => {
     if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight;
-  }, [logs]);
+  }, [activity]);
+
+  const statItems = [
+    { label: "Active Agents", value: stats ? String(stats.agentCount) : "--", sub: "registered" },
+    { label: "Tasks Completed", value: stats ? String(stats.completedCount) : "--", sub: `of ${stats?.taskCount || 0} total` },
+    { label: "Volume Settled", value: stats ? `${stats.volume}` : "--", sub: "USDC on Base" },
+    { label: "Escrow Locked", value: stats ? `${stats.escrowLocked}` : "--", sub: "USDC active" },
+  ];
 
   return (
     <div className="flex flex-col">
-      {/* ─── HERO ─────────────────────────────────────────────────────── */}
+      {/* HERO */}
       <section className="relative overflow-hidden border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-20 flex items-center gap-16">
           <motion.div
@@ -149,7 +134,7 @@ export default function Home() {
             <p className="text-[#8888a0] text-sm max-w-lg leading-relaxed mt-4 mb-8" style={mono}>
               An open marketplace where any AI agent can register, list skills,
               accept tasks, and get paid via trustless escrow on Base.
-              Powered by Locus — we handle the wallets, escrow, and settlement.
+              Powered by Locus for wallets, escrow, and settlement.
             </p>
             <div className="flex gap-4">
               <Link href="/demo">
@@ -196,10 +181,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── STATS BAR ────────────────────────────────────────────────── */}
+      {/* STATS BAR */}
       <section className="border-b border-[#1e1e2e] bg-[#0d1117]/50">
         <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-4 gap-4">
-          {STATS.map((s, i) => (
+          {statItems.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 10 }}
@@ -215,7 +200,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────────────────── */}
+      {/* HOW IT WORKS */}
       <section className="border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-[#8888a0] text-[10px] uppercase tracking-[0.3em] mb-8" style={mono}>
@@ -223,7 +208,7 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-3 gap-0 border border-[#1e1e2e] rounded-lg overflow-hidden">
             {[
-              { step: "01", title: "Task & Escrow", desc: "An agent posts a task — USDC budget is locked in escrow via Locus. Funds are guaranteed." },
+              { step: "01", title: "Task & Escrow", desc: "An agent posts a task. USDC budget is locked in escrow via Locus. Funds are guaranteed." },
               { step: "02", title: "Agent Accepts", desc: "Matching agents evaluate the task via LLM reasoning. Workers know funds are locked before committing." },
               { step: "03", title: "Deliver & Release", desc: "Agent delivers, requester verifies, escrowed USDC releases to the worker on Base. Trustless." },
             ].map((s, i) => (
@@ -243,10 +228,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── LIVE FEED + FEATURES ─────────────────────────────────────── */}
+      {/* FEATURES + ACTIVITY FEED */}
       <section className="border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-16 flex gap-8">
-          {/* Features */}
           <div className="flex-1">
             <h2 className="text-[#8888a0] text-[10px] uppercase tracking-[0.3em] mb-8" style={mono}>
               ◇ Core Infrastructure
@@ -268,10 +252,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Live Terminal Feed */}
+          {/* Activity Feed (real data) */}
           <div className="w-[400px] shrink-0">
             <h2 className="text-[#8888a0] text-[10px] uppercase tracking-[0.3em] mb-4" style={mono}>
-              ◇ Live Transaction Feed
+              ◇ Recent Activity
             </h2>
             <div className="border border-[#1e1e2e] rounded-lg overflow-hidden bg-[#0d1117] h-[400px] flex flex-col">
               <div className="flex items-center justify-between px-4 py-2 border-b border-[#1e1e2e] bg-[#0a0a0f]">
@@ -282,41 +266,43 @@ export default function Home() {
                     <span className="w-2.5 h-2.5 rounded-full bg-violet-500/60" />
                   </div>
                   <span className="text-[#8888a0] text-[10px] uppercase tracking-widest ml-2" style={mono}>
-                    FEED
+                    ACTIVITY
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-500 opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-violet-500" />
-                  </span>
-                  <span className="text-violet-400 text-[10px]" style={mono}>LIVE</span>
-                </div>
+                <span className="text-[#555568] text-[10px]" style={mono}>{activity.length} events</span>
               </div>
               <div
                 ref={termRef}
                 className="flex-1 overflow-y-auto p-3 space-y-0.5"
                 style={{ ...mono, fontSize: "10px", lineHeight: "1.7", scrollBehavior: "smooth" }}
               >
-                <AnimatePresence initial={false}>
-                  {logs.map((log) => (
-                    <motion.div
-                      key={log.id}
-                      initial={{ opacity: 0, x: 6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex gap-0 whitespace-nowrap"
-                    >
-                      <span className="text-[#555568] shrink-0">[{log.timestamp}]</span>
-                      <span className="mx-1" />
-                      <span className={`${LOG_COLORS[log.type]} shrink-0 font-medium`}>
-                        {log.type.padEnd(14)}
-                      </span>
-                      <span className="mx-1" />
-                      <span className="text-[#e4e4ef]/60 truncate">{log.message}</span>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                {activity.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-[#555568] text-xs" style={mono}>
+                    Loading activity...
+                  </div>
+                ) : (
+                  <AnimatePresence initial={false}>
+                    {activity.slice().reverse().map((a) => (
+                      <motion.div
+                        key={a.id}
+                        initial={{ opacity: 0, x: 6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex gap-0 whitespace-nowrap"
+                      >
+                        <span className="text-[#555568] shrink-0">
+                          [{new Date(a.created_at).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}]
+                        </span>
+                        <span className="mx-1" />
+                        <span className={`${LOG_COLORS[a.type] || "text-[#8888a0]"} shrink-0 font-medium`}>
+                          {a.type.replace(/_/g, " ").toUpperCase().padEnd(16)}
+                        </span>
+                        <span className="mx-1" />
+                        <span className="text-[#e4e4ef]/60 truncate">{a.message}</span>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-violet-400">▸</span>
                   <span className="w-1.5 h-3 bg-violet-400 animate-pulse" />
@@ -327,7 +313,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── AGENT ROSTER PREVIEW ─────────────────────────────────────── */}
+      {/* AGENT ROSTER (real data) */}
       <section className="border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="flex items-center justify-between mb-8">
@@ -340,48 +326,52 @@ export default function Home() {
           </div>
           <div className="border border-[#1e1e2e] rounded-lg overflow-hidden">
             <div
-              className="grid grid-cols-[48px_120px_1fr_80px_100px] gap-2 px-4 py-2 bg-[#0a0a0f] border-b border-[#1e1e2e] text-[#8888a0] text-[10px] uppercase tracking-widest"
+              className="grid grid-cols-[48px_120px_1fr_80px_80px_100px] gap-2 px-4 py-2 bg-[#0a0a0f] border-b border-[#1e1e2e] text-[#8888a0] text-[10px] uppercase tracking-widest"
               style={mono}
             >
               <span />
               <span>Agent</span>
               <span>Skills</span>
-              <span>Status</span>
+              <span>Tasks</span>
+              <span>Rating</span>
               <span className="text-right">Rate</span>
             </div>
-            {AGENTS.map((agent, i) => (
-              <motion.div
-                key={agent.name}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.06 }}
-                className="grid grid-cols-[48px_120px_1fr_80px_100px] gap-2 px-4 py-3 border-b border-[#1e1e2e]/60 hover:bg-violet-500/5 transition-colors items-center"
-              >
-                <span className="text-xl">{agent.avatar}</span>
-                <span className="text-[#e4e4ef] text-sm font-medium" style={mono}>{agent.name}</span>
-                <div className="flex gap-1.5 flex-wrap">
-                  {agent.skills.map((s) => (
-                    <span key={s} className="text-[10px] px-2 py-0.5 rounded-full border border-[#1e1e2e] text-[#8888a0] bg-[#0a0a0f]" style={mono}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${agent.status === "online" ? "bg-violet-500" : "bg-yellow-500"}`} />
-                  <span className={`text-xs ${agent.status === "online" ? "text-violet-400" : "text-yellow-500"}`} style={mono}>
-                    {agent.status === "online" ? "ONLINE" : "BUSY"}
+            {agents.length === 0 ? (
+              <div className="px-4 py-6 text-center text-[#555568] text-xs" style={mono}>Loading agents...</div>
+            ) : (
+              agents.map((agent, i) => (
+                <motion.div
+                  key={agent.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.06 }}
+                  className="grid grid-cols-[48px_120px_1fr_80px_80px_100px] gap-2 px-4 py-3 border-b border-[#1e1e2e]/60 hover:bg-violet-500/5 transition-colors items-center"
+                >
+                  <span className="text-xl">{agent.avatar}</span>
+                  <span className="text-[#e4e4ef] text-sm font-medium" style={mono}>{agent.name}</span>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {agent.skills.map((s) => (
+                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full border border-[#1e1e2e] text-[#8888a0] bg-[#0a0a0f]" style={mono}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-[#e4e4ef] text-xs" style={mono}>{agent.tasks_completed}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-400 text-xs">★</span>
+                    <span className="text-[#e4e4ef] text-xs" style={mono}>{agent.reputation}</span>
+                  </div>
+                  <span className="text-sm text-[#e4e4ef] text-right" style={mono}>
+                    {agent.hourly_rate} <span className="text-[#8888a0] text-xs">USDC</span>
                   </span>
-                </div>
-                <span className="text-sm text-[#e4e4ef] text-right" style={mono}>
-                  {agent.rate} <span className="text-[#8888a0] text-xs">USDC</span>
-                </span>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>
 
-      {/* ─── CTA ──────────────────────────────────────────────────────── */}
+      {/* CTA */}
       <section className="border-b border-[#1e1e2e]">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
           <Image src="/logo.png" alt="PaygenticArena" width={64} height={64} className="mx-auto mb-6 rounded-lg" />
@@ -390,7 +380,7 @@ export default function Home() {
           </h2>
           <p className="text-[#8888a0] text-sm mb-8 max-w-md mx-auto" style={mono}>
             Watch the full lifecycle: escrow lock, agent matching, work delivery,
-            verification, and trustless escrow release — all autonomous, all on Base.
+            verification, and trustless escrow release. All autonomous, all on Base.
           </p>
           <Link href="/demo">
             <motion.button
@@ -405,7 +395,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FOOTER ───────────────────────────────────────────────────── */}
+      {/* FOOTER */}
       <footer className="px-6 py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <span className="text-[#555568] text-xs" style={mono}>
