@@ -197,23 +197,61 @@ export default function DemoPage() {
     addLog(`▶ Starting demo: "${scenario.title}"`);
     addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDC`);
     addLog("");
+    addLog(`POST /api/demo (full flow, single request)`);
 
     try {
-      for (let i = 0; i < INITIAL_STEPS.length; i++) {
-        await runStep(i);
-        // Pause between steps for dramatic effect
-        if (i < INITIAL_STEPS.length - 1) {
-          await new Promise((r) => setTimeout(r, 1000));
-          addLog("");
+      const res = await fetch("/api/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requesterId: scenario.requester,
+          title: scenario.taskTitle,
+          description: scenario.taskDescription,
+          skillRequired: scenario.skillRequired,
+          budget: scenario.budget,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+
+      const stepResults: StepResult[] = data.steps || [];
+
+      for (let i = 0; i < stepResults.length && i < INITIAL_STEPS.length; i++) {
+        const result = stepResults[i];
+        setCurrentStep(i);
+        setSteps((prev) => prev.map((s, j) => (j === i ? { ...s, status: "running" } : s)));
+
+        addLog("");
+        addLog(`▶ Step ${i + 1}: ${INITIAL_STEPS[i].title}`);
+
+        if (result.data) {
+          Object.entries(result.data).forEach(([k, v]) => {
+            if (typeof v === "string" && v.length > 100) {
+              addLog(`  ${k}: "${(v as string).slice(0, 100)}..."`);
+            } else {
+              addLog(`  ${k}: ${JSON.stringify(v)}`);
+            }
+          });
+        }
+
+        addLog(`✓ Step completed: ${INITIAL_STEPS[i].title}`);
+        setSteps((prev) => prev.map((s, j) => (j === i ? { ...s, status: "completed", result } : s)));
+
+        // Pause between steps for visual effect
+        if (i < stepResults.length - 1) {
+          await new Promise((r) => setTimeout(r, 600));
         }
       }
+
       addLog("");
       addLog("═══════════════════════════════════════");
       addLog("✓ DEMO COMPLETE — Full lifecycle with trustless escrow");
       addLog("  Escrow Lock → Assignment → Delivery → Verification → Escrow Release");
       addLog("═══════════════════════════════════════");
       setIsComplete(true);
-    } catch {
+    } catch (e: any) {
+      addLog(`✗ Error: ${e.message}`);
       addLog("✗ Demo halted due to error");
     }
 
@@ -221,31 +259,9 @@ export default function DemoPage() {
   };
 
   const runSingleStep = async () => {
-    const nextStep = steps.findIndex((s) => s.status === "pending");
-    if (nextStep === -1) return;
-
-    setIsRunning(true);
-
-    if (nextStep === 0) {
-      addLog(`▶ Starting demo: "${scenario.title}"`);
-      addLog(`  Requester: ${scenario.requesterName} | Skill: ${scenario.skillRequired} | Budget: ${scenario.budget} USDC`);
-      addLog("");
-    }
-
-    try {
-      await runStep(nextStep);
-      if (nextStep === INITIAL_STEPS.length - 1) {
-        addLog("");
-        addLog("═══════════════════════════════════════");
-        addLog("✓ DEMO COMPLETE");
-        addLog("═══════════════════════════════════════");
-        setIsComplete(true);
-      }
-    } catch {
-      // error already logged
-    }
-
-    setIsRunning(false);
+    // Step-by-step uses the same full-flow approach since DB is in-memory on serverless
+    if (steps.some((s) => s.status !== "pending")) return;
+    await runAll();
   };
 
   return (
