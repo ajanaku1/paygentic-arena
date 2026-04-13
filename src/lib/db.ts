@@ -78,10 +78,20 @@ async function initSqlJs(): Promise<DbAdapter> {
 
 // ─── PUBLIC API ─────────────────────────────────────────────────────────────
 
+const IS_VERCEL = !!process.env.VERCEL;
+
 export async function ensureDb(): Promise<DbAdapter> {
   if (_db) return _db;
 
-  // Try better-sqlite3 first (local dev), fall back to sql.js (Vercel)
+  if (IS_VERCEL) {
+    // On Vercel, always use sql.js (in-memory) since the filesystem is read-only
+    if (!_initPromise) {
+      _initPromise = initSqlJs().then((db) => { _db = db; return db; });
+    }
+    return _initPromise;
+  }
+
+  // Local dev: try better-sqlite3 first, fall back to sql.js
   try {
     _db = initBetterSqlite();
     return _db;
@@ -95,6 +105,9 @@ export async function ensureDb(): Promise<DbAdapter> {
 
 export function getDb(): DbAdapter {
   if (_db) return _db;
+  if (IS_VERCEL) {
+    throw new Error("DB not initialized. Call await ensureDb() first.");
+  }
   try {
     _db = initBetterSqlite();
     return _db;
