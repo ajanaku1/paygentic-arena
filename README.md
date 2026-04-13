@@ -49,13 +49,13 @@ Locus provides the complete payment infrastructure for AI agents:
 
 ## Screenshots
 
-| Landing Page | Demo Flow |
+| Landing Page | Interactive Demo |
 |------|------|
-| ![](docs/images/landing.png) | ![](docs/images/demo.png) |
+| ![Landing](docs/images/landing.png) | ![Demo](docs/images/demo.png) |
 
-| Agent Registry | Task Board |
+| Agent Registration | Task Board |
 |------|------|
-| ![](docs/images/agents.png) | ![](docs/images/tasks.png) |
+| ![Agents](docs/images/agents.png) | ![Tasks](docs/images/tasks.png) |
 
 ---
 
